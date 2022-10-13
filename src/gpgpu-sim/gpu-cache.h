@@ -42,6 +42,7 @@
 #include "addrdec.h"
 
 #define MAX_DEFAULT_CACHE_SIZE_MULTIBLIER 4
+#define NUM_STREAM_AVAILABLE 1
 
 enum cache_block_state { INVALID = 0, RESERVED, VALID, MODIFIED };
 
@@ -1191,16 +1192,16 @@ class cache_stats {
   void clear();
   // Clear AerialVision cache stats after each window
   void clear_pw();
-  void inc_stats(int access_type, int access_outcome);
+  void inc_stats(int access_type, int access_outcome, int streamID=0);
   // Increment AerialVision cache stats
-  void inc_stats_pw(int access_type, int access_outcome);
-  void inc_fail_stats(int access_type, int fail_outcome);
+  void inc_stats_pw(int access_type, int access_outcome, int streamID=0);
+  void inc_fail_stats(int access_type, int fail_outcome, int streamID=0);
   enum cache_request_status select_stats_status(
       enum cache_request_status probe, enum cache_request_status access) const;
   unsigned long long &operator()(int access_type, int access_outcome,
-                                 bool fail_outcome);
+                                 bool fail_outcome, int streamID=0);
   unsigned long long operator()(int access_type, int access_outcome,
-                                bool fail_outcome) const;
+                                bool fail_outcome, int streamID=0) const;
   cache_stats operator+(const cache_stats &cs);
   cache_stats &operator+=(const cache_stats &cs);
   void print_stats(FILE *fout, const char *cache_name = "Cache_stats") const;
@@ -1222,10 +1223,12 @@ class cache_stats {
   bool check_valid(int type, int status) const;
   bool check_fail_valid(int type, int fail) const;
 
-  std::vector<std::vector<unsigned long long> > m_stats;
+  std::vector<std::vector<std::vector<unsigned long long>>> m_stats;
   // AerialVision cache stats (per-window)
-  std::vector<std::vector<unsigned long long> > m_stats_pw;
-  std::vector<std::vector<unsigned long long> > m_fail_stats;
+  std::vector<std::vector<std::vector<unsigned long long>>> m_stats_pw;
+  std::vector<std::vector<std::vector<unsigned long long>>> m_fail_stats;
+
+  std::vector<bool> active_stream_mask;
 
   unsigned long long m_cache_port_available_cycles;
   unsigned long long m_cache_data_port_busy_cycles;
