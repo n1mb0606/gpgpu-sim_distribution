@@ -1069,7 +1069,7 @@ class warp_inst_t : public inst_t {
     m_is_printf = false;
     m_is_cdp = 0;
     should_do_atomic = true;
-    m_cta_id = 0;
+    //m_cta_id = 0;
   }
   virtual ~warp_inst_t() {}
 
@@ -1081,6 +1081,7 @@ class warp_inst_t : public inst_t {
 
   void issue(const active_mask_t &mask, unsigned warp_id,
              unsigned long long cycle, int dynamic_warp_id, int sch_id);
+            //unsigned long long cycle, int dynamic_warp_id, int sch_id, unsigned cta_id=0);
 
   const active_mask_t &get_active_mask() const { return m_warp_active_mask; }
   void completed(unsigned long long cycle)
@@ -1220,7 +1221,7 @@ class warp_inst_t : public inst_t {
   bool m_isatomic;
   bool should_do_atomic;
   bool m_is_printf;
-  unsigned m_cta_id;
+  //unsigned m_cta_id;
   unsigned m_warp_id;
   unsigned m_dynamic_warp_id;
   const core_config *m_config;
