@@ -604,8 +604,6 @@ class gpgpu_sim : public gpgpu_t {
   // backward pointer
   class gpgpu_context *gpgpu_ctx;
 
-  //std::vector<kernel_info_t *> get_running_kernels() { return m_running_kernels; }
-
  private:
   // clocks
   void reinit_clock_domains(void);

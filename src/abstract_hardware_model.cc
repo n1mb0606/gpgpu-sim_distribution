@@ -57,7 +57,6 @@ void warp_inst_t::issue(const active_mask_t &mask, unsigned warp_id,
   m_warp_issued_mask = mask;
   m_uid = ++(m_config->gpgpu_ctx->warp_inst_sm_next_uid);
   m_warp_id = warp_id;
-  //m_cta_id = cta_id;
   m_dynamic_warp_id = dynamic_warp_id;
   issue_cycle = cycle;
   cycles = initiation_interval;
@@ -911,7 +910,6 @@ CUstream_st *kernel_info_t::get_default_stream_cta(dim3 ctaid) {
 }
 
 bool kernel_info_t::cta_has_stream(dim3 ctaid, CUstream_st *stream) {
-
   if (m_cta_streams.find(ctaid) == m_cta_streams.end()) return false;
 
   std::list<CUstream_st *> &stream_list = m_cta_streams[ctaid];

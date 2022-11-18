@@ -1983,7 +1983,7 @@ void gpgpu_sim::cycle() {
       raise(SIGTRAP);  // Debug breakpoint
     }
     gpu_sim_cycle++;
-    fprintf(stdout, "gpu_sim_cycle %d\n", gpu_sim_cycle);
+    //fprintf(stdout, "gpu_sim_cycle %d\n", gpu_sim_cycle);
 
     if (g_interactive_debugger_enabled) gpgpu_debug();
 
