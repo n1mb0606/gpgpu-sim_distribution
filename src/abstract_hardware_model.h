@@ -232,7 +232,7 @@ class kernel_info_t {
   //      m_num_cores_running=0;
   //      m_param_mem=NULL;
   //   }
-  kernel_info_t(dim3 gridDim, dim3 blockDim, class function_info *entry);
+  kernel_info_t(dim3 gridDim, dim3 blockDim, class function_info *entry, unsigned long long streamID=0);
   kernel_info_t(
       dim3 gridDim, dim3 blockDim, class function_info *entry,
       std::map<std::string, const struct cudaArray *> nameToCudaArray,
@@ -291,6 +291,7 @@ class kernel_info_t {
            m_next_tid.x < m_block_dim.x;
   }
   unsigned get_uid() const { return m_uid; }
+  unsigned long long get_streamid() const { return m_streamID; }
   std::string get_name() const { return name(); }
   std::string name() const;
 
@@ -324,7 +325,8 @@ class kernel_info_t {
 
   class function_info *m_kernel_entry;
 
-  unsigned m_uid;
+  unsigned m_uid;     // Kernel ID
+  unsigned long long m_streamID;
 
   // These maps contain the snapshot of the texture mappings at kernel launch
   std::map<std::string, const struct cudaArray *> m_NameToCudaArray;
@@ -1054,11 +1056,13 @@ class warp_inst_t : public inst_t {
   // constructors
   warp_inst_t() {
     m_uid = 0;
+    m_streamID = 0;
     m_empty = true;
     m_config = NULL;
   }
   warp_inst_t(const core_config *config) {
     m_uid = 0;
+    m_streamID = 0;
     assert(config->warp_size <= MAX_WARP_SIZE);
     m_config = config;
     m_empty = true;
@@ -1081,7 +1085,10 @@ class warp_inst_t : public inst_t {
 
   void issue(const active_mask_t &mask, unsigned warp_id,
              unsigned long long cycle, int dynamic_warp_id, int sch_id);
-            //unsigned long long cycle, int dynamic_warp_id, int sch_id, unsigned cta_id=0);
+
+  void issue(const active_mask_t &mask, unsigned warp_id,
+             unsigned long long cycle, int dynamic_warp_id, int sch_id,
+             unsigned long long streamID);
 
   const active_mask_t &get_active_mask() const { return m_warp_active_mask; }
   void completed(unsigned long long cycle)
@@ -1209,11 +1216,13 @@ class warp_inst_t : public inst_t {
 
   void print(FILE *fout) const;
   unsigned get_uid() const { return m_uid; }
+  unsigned long long get_streamid() const { return m_streamID; }
   unsigned get_schd_id() const { return m_scheduler_id; }
   active_mask_t get_warp_active_mask() const { return m_warp_active_mask; }
 
  protected:
   unsigned m_uid;
+  unsigned long long m_streamID;
   bool m_empty;
   bool m_cache_hit;
   unsigned long long issue_cycle;

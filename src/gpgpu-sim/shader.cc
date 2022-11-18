@@ -1062,6 +1062,41 @@ void shader_core_ctx::issue_warp(register_set &pipe_reg_set,
   m_warp[warp_id]->set_next_pc(next_inst->pc + next_inst->isize);
 }
 
+void shader_core_ctx::issue_warp(register_set &pipe_reg_set,
+                                 const warp_inst_t *next_inst,
+                                 const active_mask_t &active_mask,
+                                 unsigned warp_id, unsigned sch_id,
+                                 unsigned long long streamID) {
+  printf("shader_core_ctx::issue_warp: streamID %llu", streamID);
+  warp_inst_t **pipe_reg =
+      pipe_reg_set.get_free(m_config->sub_core_model, sch_id);
+  assert(pipe_reg);
+
+  m_warp[warp_id]->ibuffer_free();
+  assert(next_inst->valid());
+  **pipe_reg = *next_inst;  // static instruction information
+  (*pipe_reg)->issue(active_mask, warp_id,
+                     m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle,
+                     m_warp[warp_id]->get_dynamic_warp_id(),
+                     sch_id, streamID);  // dynamic instruction information
+  m_stats->shader_cycle_distro[2 + (*pipe_reg)->active_count()]++;
+  func_exec_inst(**pipe_reg);
+
+  if (next_inst->op == BARRIER_OP) {
+    m_warp[warp_id]->store_info_of_last_inst_at_barrier(*pipe_reg);
+    m_barriers.warp_reaches_barrier(m_warp[warp_id]->get_cta_id(), warp_id,
+                                    const_cast<warp_inst_t *>(next_inst));
+
+  } else if (next_inst->op == MEMORY_BARRIER_OP) {
+    m_warp[warp_id]->set_membar();
+  }
+
+  updateSIMTStack(warp_id, *pipe_reg);
+
+  m_scoreboard->reserveRegisters(*pipe_reg);
+  m_warp[warp_id]->set_next_pc(next_inst->pc + next_inst->isize);
+}
+
 void shader_core_ctx::issue() {
   // Ensure fair round robin issu between schedulers
   unsigned j;
@@ -1286,7 +1321,7 @@ void scheduler_unit::cycle() {
                   (!diff_exec_units ||
                    previous_issued_inst_exec_type != exec_unit_type_t::MEM)) {
                 m_shader->issue_warp(*m_mem_out, pI, active_mask, warp_id,
-                                     m_id);
+                                     m_id, m_shader->get_kernel()->get_streamid());
                 issued++;
                 issued_inst = true;
                 warp_inst_issued = true;
@@ -1351,14 +1386,14 @@ void scheduler_unit::cycle() {
 
                 if (execute_on_SP) {
                   m_shader->issue_warp(*m_sp_out, pI, active_mask, warp_id,
-                                       m_id);
+                                       m_id, m_shader->get_kernel()->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
                   previous_issued_inst_exec_type = exec_unit_type_t::SP;
                 } else if (execute_on_INT) {
                   m_shader->issue_warp(*m_int_out, pI, active_mask, warp_id,
-                                       m_id);
+                                       m_id, m_shader->get_kernel()->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
@@ -1375,7 +1410,7 @@ void scheduler_unit::cycle() {
 
                 if (dp_pipe_avail) {
                   m_shader->issue_warp(*m_dp_out, pI, active_mask, warp_id,
-                                       m_id);
+                                       m_id, m_shader->get_kernel()->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
@@ -1395,7 +1430,7 @@ void scheduler_unit::cycle() {
 
                 if (sfu_pipe_avail) {
                   m_shader->issue_warp(*m_sfu_out, pI, active_mask, warp_id,
-                                       m_id);
+                                       m_id, m_shader->get_kernel()->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
@@ -1411,7 +1446,7 @@ void scheduler_unit::cycle() {
 
                 if (tensor_core_pipe_avail) {
                   m_shader->issue_warp(*m_tensor_core_out, pI, active_mask,
-                                       warp_id, m_id);
+                                       warp_id, m_id, m_shader->get_kernel()->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
@@ -1432,7 +1467,7 @@ void scheduler_unit::cycle() {
 
                 if (spec_pipe_avail) {
                   m_shader->issue_warp(*spec_reg_set, pI, active_mask, warp_id,
-                                       m_id);
+                                       m_id, m_shader->get_kernel()->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;

@@ -66,6 +66,23 @@ void warp_inst_t::issue(const active_mask_t &mask, unsigned warp_id,
   m_scheduler_id = sch_id;
 }
 
+void warp_inst_t::issue(const active_mask_t &mask, unsigned warp_id,
+                        unsigned long long cycle, int dynamic_warp_id,
+                        int sch_id, unsigned long long streamID) {
+  m_warp_active_mask = mask;
+  m_warp_issued_mask = mask;
+  m_uid = ++(m_config->gpgpu_ctx->warp_inst_sm_next_uid);
+  m_streamID = streamID;
+  printf("warp_inst_t::issue: m_streamID=%llu\n", m_streamID);
+  m_warp_id = warp_id;
+  m_dynamic_warp_id = dynamic_warp_id;
+  issue_cycle = cycle;
+  cycles = initiation_interval;
+  m_cache_hit = false;
+  m_empty = false;
+  m_scheduler_id = sch_id;
+}
+
 checkpoint::checkpoint() {
   struct stat st = {0};
 
@@ -757,7 +774,8 @@ void warp_inst_t::completed(unsigned long long cycle) const {
 }
 
 kernel_info_t::kernel_info_t(dim3 gridDim, dim3 blockDim,
-                             class function_info *entry) {
+                             class function_info *entry,
+                             unsigned long long streamID) {
   m_kernel_entry = entry;
   m_grid_dim = gridDim;
   m_block_dim = blockDim;
@@ -767,6 +785,7 @@ kernel_info_t::kernel_info_t(dim3 gridDim, dim3 blockDim,
   m_next_tid = m_next_cta;
   m_num_cores_running = 0;
   m_uid = (entry->gpgpu_ctx->kernel_info_m_next_uid)++;
+  m_streamID = streamID;
   m_param_mem = new memory_space_impl<8192>("param", 64 * 1024);
 
   // Jin: parent and child kernel management for CDP
