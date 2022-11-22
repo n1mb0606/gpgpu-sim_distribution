@@ -890,7 +890,7 @@ void cache_stats::print_stats(FILE *fout, const char *cache_name) const {
 
 void cache_stats::print_fail_stats(FILE *fout, const char *cache_name) const {
   std::string m_cache_name = cache_name;
-  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+  for(auto iter = m_fail_stats.begin(); iter != m_fail_stats.end(); ++iter) {
     unsigned long long streamID = iter->first;
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       for (unsigned fail = 0; fail < NUM_CACHE_RESERVATION_FAIL_STATUS; ++fail) {
@@ -1244,7 +1244,7 @@ void baseline_cache::send_read_request(new_addr_type addr,
       m_tag_array->access(block_addr, time, cache_index, wb, evicted, mf);
 
     m_mshrs.add(mshr_addr, mf);
-    m_stats.inc_stats(mf->get_access_type(), MSHR_HIT);
+    m_stats.inc_stats(mf->get_access_type(), MSHR_HIT, mf->get_streamID());
     do_miss = true;
 
   } else if (!mshr_hit && mshr_avail &&
@@ -1265,9 +1265,9 @@ void baseline_cache::send_read_request(new_addr_type addr,
 
     do_miss = true;
   } else if (mshr_hit && !mshr_avail)
-    m_stats.inc_fail_stats(mf->get_access_type(), MSHR_MERGE_ENRTY_FAIL);
+    m_stats.inc_fail_stats(mf->get_access_type(), MSHR_MERGE_ENRTY_FAIL, mf->get_streamID());
   else if (!mshr_hit && !mshr_avail)
-    m_stats.inc_fail_stats(mf->get_access_type(), MSHR_ENRTY_FAIL);
+    m_stats.inc_fail_stats(mf->get_access_type(), MSHR_ENRTY_FAIL, mf->get_streamID());
   else
     assert(0);
 }
@@ -1328,7 +1328,7 @@ cache_request_status data_cache::wr_hit_wt(new_addr_type addr,
                                            std::list<cache_event> &events,
                                            enum cache_request_status status) {
   if (miss_queue_full(0)) {
-    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
     return RESERVATION_FAIL;  // cannot handle request this cycle
   }
 
@@ -1356,7 +1356,7 @@ cache_request_status data_cache::wr_hit_we(new_addr_type addr,
                                            std::list<cache_event> &events,
                                            enum cache_request_status status) {
   if (miss_queue_full(0)) {
-    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
     return RESERVATION_FAIL;  // cannot handle request this cycle
   }
 
@@ -1405,11 +1405,11 @@ enum cache_request_status data_cache::wr_miss_wa_naive(
          (m_miss_queue.size() < m_config.m_miss_queue_size)))) {
     // check what is the exactly the failure reason
     if (miss_queue_full(2))
-      m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+      m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
     else if (mshr_hit && !mshr_avail)
-      m_stats.inc_fail_stats(mf->get_access_type(), MSHR_MERGE_ENRTY_FAIL);
+      m_stats.inc_fail_stats(mf->get_access_type(), MSHR_MERGE_ENRTY_FAIL, mf->get_streamID());
     else if (!mshr_hit && !mshr_avail)
-      m_stats.inc_fail_stats(mf->get_access_type(), MSHR_ENRTY_FAIL);
+      m_stats.inc_fail_stats(mf->get_access_type(), MSHR_ENRTY_FAIL, mf->get_streamID());
     else
       assert(0);
 
@@ -1479,7 +1479,7 @@ enum cache_request_status data_cache::wr_miss_wa_fetch_on_write(
     // reserve mshr
 
     if (miss_queue_full(0)) {
-      m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+      m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
       return RESERVATION_FAIL;  // cannot handle request this cycle
     }
 
@@ -1526,11 +1526,11 @@ enum cache_request_status data_cache::wr_miss_wa_fetch_on_write(
            (m_miss_queue.size() < m_config.m_miss_queue_size)))) {
       // check what is the exactly the failure reason
       if (miss_queue_full(1))
-        m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+        m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
       else if (mshr_hit && !mshr_avail)
-        m_stats.inc_fail_stats(mf->get_access_type(), MSHR_MERGE_ENRTY_FAIL);
+        m_stats.inc_fail_stats(mf->get_access_type(), MSHR_MERGE_ENRTY_FAIL, mf->get_streamID());
       else if (!mshr_hit && !mshr_avail)
-        m_stats.inc_fail_stats(mf->get_access_type(), MSHR_ENRTY_FAIL);
+        m_stats.inc_fail_stats(mf->get_access_type(), MSHR_ENRTY_FAIL, mf->get_streamID());
       else
         assert(0);
 
@@ -1543,7 +1543,7 @@ enum cache_request_status data_cache::wr_miss_wa_fetch_on_write(
     if (m_mshrs.probe(mshr_addr) &&
         m_mshrs.is_read_after_write_pending(mshr_addr) && mf->is_write()) {
       // assert(0);
-      m_stats.inc_fail_stats(mf->get_access_type(), MSHR_RW_PENDING);
+      m_stats.inc_fail_stats(mf->get_access_type(), MSHR_RW_PENDING, mf->get_streamID());
       return RESERVATION_FAIL;
     }
 
@@ -1603,7 +1603,7 @@ enum cache_request_status data_cache::wr_miss_wa_lazy_fetch_on_read(
   // mshr
 
   if (miss_queue_full(0)) {
-    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
     return RESERVATION_FAIL;  // cannot handle request this cycle
   }
 
@@ -1664,7 +1664,7 @@ enum cache_request_status data_cache::wr_miss_no_wa(
     new_addr_type addr, unsigned cache_index, mem_fetch *mf, unsigned time,
     std::list<cache_event> &events, enum cache_request_status status) {
   if (miss_queue_full(0)) {
-    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
     return RESERVATION_FAIL;  // cannot handle request this cycle
   }
 
@@ -1709,7 +1709,7 @@ enum cache_request_status data_cache::rd_miss_base(
   if (miss_queue_full(1)) {
     // cannot handle request this cycle
     // (might need to generate two requests)
-    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+    m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
     return RESERVATION_FAIL;
   }
 
@@ -1768,16 +1768,16 @@ enum cache_request_status read_only_cache::access(
         cache_status = RESERVATION_FAIL;
     } else {
       cache_status = RESERVATION_FAIL;
-      m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL);
+      m_stats.inc_fail_stats(mf->get_access_type(), MISS_QUEUE_FULL, mf->get_streamID());
     }
   } else {
-    m_stats.inc_fail_stats(mf->get_access_type(), LINE_ALLOC_FAIL);
+    m_stats.inc_fail_stats(mf->get_access_type(), LINE_ALLOC_FAIL, mf->get_streamID());
   }
 
   m_stats.inc_stats(mf->get_access_type(),
-                    m_stats.select_stats_status(status, cache_status));
+                    m_stats.select_stats_status(status, cache_status), mf->get_streamID());
   m_stats.inc_stats_pw(mf->get_access_type(),
-                       m_stats.select_stats_status(status, cache_status));
+                       m_stats.select_stats_status(status, cache_status), mf->get_streamID());
   return cache_status;
 }
 
@@ -1805,7 +1805,7 @@ enum cache_request_status data_cache::process_tag_probe(
     } else {
       // the only reason for reservation fail here is LINE_ALLOC_FAIL (i.e all
       // lines are reserved)
-      m_stats.inc_fail_stats(mf->get_access_type(), LINE_ALLOC_FAIL);
+      m_stats.inc_fail_stats(mf->get_access_type(), LINE_ALLOC_FAIL, mf->get_streamID());
     }
   } else {  // Read
     if (probe_status == HIT) {
@@ -1817,7 +1817,7 @@ enum cache_request_status data_cache::process_tag_probe(
     } else {
       // the only reason for reservation fail here is LINE_ALLOC_FAIL (i.e all
       // lines are reserved)
-      m_stats.inc_fail_stats(mf->get_access_type(), LINE_ALLOC_FAIL);
+      m_stats.inc_fail_stats(mf->get_access_type(), LINE_ALLOC_FAIL, mf->get_streamID());
     }
   }
 
@@ -1854,9 +1854,9 @@ enum cache_request_status data_cache::access(new_addr_type addr, mem_fetch *mf,
   enum cache_request_status access_status =
       process_tag_probe(wr, probe_status, addr, cache_index, mf, time, events);
   m_stats.inc_stats(mf->get_access_type(),
-                    m_stats.select_stats_status(probe_status, access_status));
+                    m_stats.select_stats_status(probe_status, access_status), mf->get_streamID());
   m_stats.inc_stats_pw(mf->get_access_type(), m_stats.select_stats_status(
-                                                  probe_status, access_status));
+                                                  probe_status, access_status), mf->get_streamID());
   return access_status;
 }
 
@@ -1918,9 +1918,9 @@ enum cache_request_status tex_cache::access(new_addr_type addr, mem_fetch *mf,
     cache_status = HIT_RESERVED;
   }
   m_stats.inc_stats(mf->get_access_type(),
-                    m_stats.select_stats_status(status, cache_status));
+                    m_stats.select_stats_status(status, cache_status), mf->get_streamID());
   m_stats.inc_stats_pw(mf->get_access_type(),
-                       m_stats.select_stats_status(status, cache_status));
+                       m_stats.select_stats_status(status, cache_status), mf->get_streamID());
   return cache_status;
 }
 
