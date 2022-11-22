@@ -626,20 +626,6 @@ void mshr_table::display(FILE *fp) const {
 /***************************************************************** Caches
  * *****************************************************************/
 cache_stats::cache_stats() {
-  m_stats.resize(NUM_STREAM_AVAILABLE);
-  m_stats_pw.resize(NUM_STREAM_AVAILABLE);
-  m_fail_stats.resize(NUM_STREAM_AVAILABLE);
-  for (unsigned i = 0; i < NUM_STREAM_AVAILABLE; ++i) {
-    m_stats[i].resize(NUM_MEM_ACCESS_TYPE);
-    m_stats_pw[i].resize(NUM_MEM_ACCESS_TYPE);
-    m_fail_stats[i].resize(NUM_MEM_ACCESS_TYPE);
-    for (unsigned j = 0; j < NUM_MEM_ACCESS_TYPE; ++j) {
-      m_stats[i][j].resize(NUM_CACHE_REQUEST_STATUS, 0);
-      m_stats_pw[i][j].resize(NUM_CACHE_REQUEST_STATUS, 0);
-      m_fail_stats[i][j].resize(NUM_CACHE_RESERVATION_FAIL_STATUS, 0);
-    }
-  }
-  active_stream_mask.resize(NUM_STREAM_AVAILABLE, false);
   m_cache_port_available_cycles = 0;
   m_cache_data_port_busy_cycles = 0;
   m_cache_fill_port_busy_cycles = 0;
@@ -649,13 +635,10 @@ void cache_stats::clear() {
   ///
   /// Zero out all current cache statistics
   ///
-  for (unsigned i = 0; i < NUM_STREAM_AVAILABLE; ++i) {
-    for (unsigned j = 0; j < NUM_MEM_ACCESS_TYPE; ++j) {
-      std::fill(m_stats[i][j].begin(), m_stats[i][j].end(), 0);
-      std::fill(m_stats_pw[i][j].begin(), m_stats_pw[i][j].end(), 0);
-      std::fill(m_fail_stats[i][j].begin(), m_fail_stats[i][j].end(), 0);
-    }
-  }
+  m_stats.clear();
+  m_stats_pw.clear();
+  m_fail_stats.clear();
+
   m_cache_port_available_cycles = 0;
   m_cache_data_port_busy_cycles = 0;
   m_cache_fill_port_busy_cycles = 0;
@@ -665,40 +648,58 @@ void cache_stats::clear_pw() {
   ///
   /// Zero out per-window cache statistics
   ///
-  for (unsigned i = 0; i < NUM_STREAM_AVAILABLE; ++i) {
-    for (unsigned j = 0; j < NUM_MEM_ACCESS_TYPE; ++j) {
-      std::fill(m_stats_pw[i][j].begin(), m_stats_pw[i][j].end(), 0);
-    }
-  }
+  m_stats_pw.clear();
 }
 
-void cache_stats::inc_stats(int access_type, int access_outcome, int streamID) {
+void cache_stats::inc_stats(int access_type, int access_outcome, unsigned long long streamID) {
   ///
   /// Increment the stat corresponding to (access_type, access_outcome) by 1.
   ///
   if (!check_valid(access_type, access_outcome))
     assert(0 && "Unknown cache access type or access outcome");
 
-  m_stats[streamID][access_type][access_outcome]++;
-  active_stream_mask[streamID] = true;
+  if (m_stats.find(streamID) == m_stats.end()) {
+    std::vector<std::vector<unsigned long long>> new_val;
+    new_val.resize(NUM_MEM_ACCESS_TYPE);
+    for (unsigned j = 0; j < NUM_MEM_ACCESS_TYPE; ++j) {
+      new_val[j].resize(NUM_CACHE_REQUEST_STATUS, 0);
+    }
+    m_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, new_val));
+  }
+  m_stats.at(streamID)[access_type][access_outcome]++;
 }
 
-void cache_stats::inc_stats_pw(int access_type, int access_outcome, int streamID) {
+void cache_stats::inc_stats_pw(int access_type, int access_outcome, unsigned long long streamID) {
   ///
   /// Increment the corresponding per-window cache stat
   ///
   if (!check_valid(access_type, access_outcome))
     assert(0 && "Unknown cache access type or access outcome");
-  m_stats_pw[streamID][access_type][access_outcome]++;
-  active_stream_mask[streamID] = true;
+
+  if (m_stats_pw.find(streamID) == m_stats_pw.end()) {
+    std::vector<std::vector<unsigned long long>> new_val;
+    new_val.resize(NUM_MEM_ACCESS_TYPE);
+    for (unsigned j = 0; j < NUM_MEM_ACCESS_TYPE; ++j) {
+      new_val[j].resize(NUM_CACHE_REQUEST_STATUS, 0);
+    }
+    m_stats_pw.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, new_val));
+  }
+  m_stats_pw.at(streamID)[access_type][access_outcome]++;
 }
 
-void cache_stats::inc_fail_stats(int access_type, int fail_outcome, int streamID) {
+void cache_stats::inc_fail_stats(int access_type, int fail_outcome, unsigned long long streamID) {
   if (!check_fail_valid(access_type, fail_outcome))
     assert(0 && "Unknown cache access type or access fail");
 
-  m_fail_stats[streamID][access_type][fail_outcome]++;
-  active_stream_mask[streamID] = true;
+  if (m_fail_stats.find(streamID) == m_fail_stats.end()) {
+    std::vector<std::vector<unsigned long long>> new_val;
+    new_val.resize(NUM_MEM_ACCESS_TYPE);
+    for (unsigned j = 0; j < NUM_MEM_ACCESS_TYPE; ++j) {
+      new_val[j].resize(NUM_CACHE_RESERVATION_FAIL_STATUS, 0);
+    }
+    m_fail_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, new_val));
+  }
+  m_fail_stats.at(streamID)[access_type][fail_outcome]++;
 }
 
 enum cache_request_status cache_stats::select_stats_status(
@@ -717,7 +718,7 @@ enum cache_request_status cache_stats::select_stats_status(
 }
 
 unsigned long long &cache_stats::operator()(int access_type, int access_outcome,
-                                            bool fail_outcome, int streamID) {
+                                            bool fail_outcome, unsigned long long streamID) {
   ///
   /// Simple method to read/modify the stat corresponding to (access_type,
   /// access_outcome) Used overloaded () to avoid the need for separate
@@ -727,17 +728,17 @@ unsigned long long &cache_stats::operator()(int access_type, int access_outcome,
     if (!check_fail_valid(access_type, access_outcome))
       assert(0 && "Unknown cache access type or fail outcome");
 
-    return m_fail_stats[streamID][access_type][access_outcome];
+    return m_fail_stats.at(streamID)[access_type][access_outcome];
   } else {
     if (!check_valid(access_type, access_outcome))
       assert(0 && "Unknown cache access type or access outcome");
 
-    return m_stats[streamID][access_type][access_outcome];
+    return m_stats.at(streamID)[access_type][access_outcome];
   }
 }
 
 unsigned long long cache_stats::operator()(int access_type, int access_outcome,
-                                           bool fail_outcome, int streamID) const {
+                                           bool fail_outcome, unsigned long long streamID) const {
   ///
   /// Const accessor into m_stats.
   ///
@@ -745,12 +746,12 @@ unsigned long long cache_stats::operator()(int access_type, int access_outcome,
     if (!check_fail_valid(access_type, access_outcome))
       assert(0 && "Unknown cache access type or fail outcome");
 
-    return m_fail_stats[streamID][access_type][access_outcome];
+    return m_fail_stats.at(streamID)[access_type][access_outcome];
   } else {
     if (!check_valid(access_type, access_outcome))
       assert(0 && "Unknown cache access type or access outcome");
 
-    return m_stats[streamID][access_type][access_outcome];
+    return m_stats.at(streamID)[access_type][access_outcome];
   }
 }
 
@@ -759,19 +760,17 @@ cache_stats cache_stats::operator+(const cache_stats &cs) {
   /// Overloaded + operator to allow for simple stat accumulation
   ///
   cache_stats ret;
-  for (unsigned streamID = 0; streamID < NUM_STREAM_AVAILABLE; ++streamID) {
-    if (this->active_stream_mask[streamID] || cs.active_stream_mask[streamID]) {
-      ret.active_stream_mask[streamID] = true;
-      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-          ret(type, status, false, streamID) =
-              m_stats[streamID][type][status] + cs(type, status, false, streamID);
-        }
-        for (unsigned status = 0; status < NUM_CACHE_RESERVATION_FAIL_STATUS;
-            ++status) {
-          ret(type, status, true, streamID) =
-              m_fail_stats[streamID][type][status] + cs(type, status, true, streamID);
-        }
+  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+        ret(type, status, false, streamID) =
+            m_stats.at(streamID)[type][status] + cs(type, status, false, streamID);
+      }
+      for (unsigned status = 0; status < NUM_CACHE_RESERVATION_FAIL_STATUS;
+          ++status) {
+        ret(type, status, true, streamID) =
+            m_fail_stats.at(streamID)[type][status] + cs(type, status, true, streamID);
       }
     }
   }
@@ -788,20 +787,18 @@ cache_stats &cache_stats::operator+=(const cache_stats &cs) {
   ///
   /// Overloaded += operator to allow for simple stat accumulation
   ///
-  for (unsigned streamID = 0; streamID < NUM_STREAM_AVAILABLE; ++streamID) {
-    if (this->active_stream_mask[streamID] || cs.active_stream_mask[streamID]) {
-      this->active_stream_mask[streamID] = true;
-      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-          m_stats[streamID][type][status] += cs(type, status, false, streamID);
-        }
-        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-          m_stats_pw[streamID][type][status] += cs(type, status, false, streamID);
-        }
-        for (unsigned status = 0; status < NUM_CACHE_RESERVATION_FAIL_STATUS;
-            ++status) {
-          m_fail_stats[streamID][type][status] += cs(type, status, true, streamID);
-        }
+  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+        m_stats.at(streamID)[type][status] += cs(type, status, false, streamID);
+      }
+      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+        m_stats_pw.at(streamID)[type][status] += cs(type, status, false, streamID);
+      }
+      for (unsigned status = 0; status < NUM_CACHE_RESERVATION_FAIL_STATUS;
+          ++status) {
+        m_fail_stats.at(streamID)[type][status] += cs(type, status, true, streamID);
       }
     }
   }
@@ -820,47 +817,45 @@ void cache_stats::print_stats(FILE *fout, const char *cache_name) const {
   ///
   std::vector<unsigned> total_access;
   std::string m_cache_name = cache_name;
-  for (unsigned streamID = 0; streamID < NUM_STREAM_AVAILABLE; ++streamID) {
-    if (active_stream_mask[streamID]) {
-      total_access.resize(NUM_MEM_ACCESS_TYPE, 0);
-      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-          fprintf(fout, "\t%s[Stream_%u][%s][%s] = %llu\n", m_cache_name.c_str(),
-                  streamID,
-                  mem_access_type_str((enum mem_access_type)type),
-                  cache_request_status_str((enum cache_request_status)status),
-                  m_stats[streamID][type][status]);
+  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    total_access.resize(NUM_MEM_ACCESS_TYPE, 0);
+    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+        fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %llu\n", m_cache_name.c_str(),
+                streamID,
+                mem_access_type_str((enum mem_access_type)type),
+                cache_request_status_str((enum cache_request_status)status),
+                m_stats.at(streamID)[type][status]);
 
-          if (status != RESERVATION_FAIL && status != MSHR_HIT)
-            // MSHR_HIT is a special type of SECTOR_MISS
-            // so its already included in the SECTOR_MISS
-            total_access[type] += m_stats[streamID][type][status];
-        }
+        if (status != RESERVATION_FAIL && status != MSHR_HIT)
+          // MSHR_HIT is a special type of SECTOR_MISS
+          // so its already included in the SECTOR_MISS
+          total_access[type] += m_stats.at(streamID)[type][status];
       }
-      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-        if (total_access[type] > 0)
-          fprintf(fout, "\t%s[Stream_%u][%s][%s] = %u\n", m_cache_name.c_str(),
-                  streamID,
-                  mem_access_type_str((enum mem_access_type)type), "TOTAL_ACCESS",
-                  total_access[type]);
-      }
+    }
+    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+      if (total_access[type] > 0)
+        fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %u\n", m_cache_name.c_str(),
+                streamID,
+                mem_access_type_str((enum mem_access_type)type), "TOTAL_ACCESS",
+                total_access[type]);
     }
   }
 }
 
 void cache_stats::print_fail_stats(FILE *fout, const char *cache_name) const {
   std::string m_cache_name = cache_name;
-  for (unsigned streamID = 0; streamID < NUM_STREAM_AVAILABLE; ++streamID) {
-    if (active_stream_mask[streamID]) {
-      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-        for (unsigned fail = 0; fail < NUM_CACHE_RESERVATION_FAIL_STATUS; ++fail) {
-          if (m_fail_stats[streamID][type][fail] > 0) {
-            fprintf(fout, "\t%s[Stream_%u][%s][%s] = %llu\n", m_cache_name.c_str(),
-                    streamID,
-                    mem_access_type_str((enum mem_access_type)type),
-                    cache_fail_status_str((enum cache_reservation_fail_reason)fail),
-                    m_fail_stats[streamID][type][fail]);
-          }
+  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+      for (unsigned fail = 0; fail < NUM_CACHE_RESERVATION_FAIL_STATUS; ++fail) {
+        if (m_fail_stats.at(streamID)[type][fail] > 0) {
+          fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %llu\n", m_cache_name.c_str(),
+                  streamID,
+                  mem_access_type_str((enum mem_access_type)type),
+                  cache_fail_status_str((enum cache_reservation_fail_reason)fail),
+                  m_fail_stats.at(streamID)[type][fail]);
         }
       }
     }
@@ -892,14 +887,13 @@ unsigned long long cache_stats::get_stats(
   /// cache_request_statuses.
   ///
   unsigned long long total = 0;
-  for (unsigned streamID = 0; streamID < NUM_STREAM_AVAILABLE; ++streamID) {
-    if (active_stream_mask[streamID]) {
-      for (unsigned type = 0; type < num_access_type; ++type) {
-        for (unsigned status = 0; status < num_access_status; ++status) {
-          if (!check_valid((int)access_type[type], (int)access_status[status]))
-            assert(0 && "Unknown cache access type or access outcome");
-          total += m_stats[streamID][access_type[type]][access_status[status]];
-        }
+  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    for (unsigned type = 0; type < num_access_type; ++type) {
+      for (unsigned status = 0; status < num_access_status; ++status) {
+        if (!check_valid((int)access_type[type], (int)access_status[status]))
+          assert(0 && "Unknown cache access type or access outcome");
+        total += m_stats.at(streamID)[access_type[type]][access_status[status]];
       }
     }
   }
@@ -913,21 +907,20 @@ void cache_stats::get_sub_stats(struct cache_sub_stats &css) const {
   struct cache_sub_stats t_css;
   t_css.clear();
 
-  for (unsigned streamID = 0; streamID < NUM_STREAM_AVAILABLE; ++streamID) {
-    if (active_stream_mask[streamID]) {
-      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-          if (status == HIT || status == MISS || status == SECTOR_MISS ||
-              status == HIT_RESERVED)
-            t_css.accesses += m_stats[streamID][type][status];
+  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+        if (status == HIT || status == MISS || status == SECTOR_MISS ||
+            status == HIT_RESERVED)
+          t_css.accesses += m_stats.at(streamID)[type][status];
 
-          if (status == MISS || status == SECTOR_MISS)
-            t_css.misses += m_stats[streamID][type][status];
+        if (status == MISS || status == SECTOR_MISS)
+          t_css.misses += m_stats.at(streamID)[type][status];
 
-          if (status == HIT_RESERVED) t_css.pending_hits += m_stats[streamID][type][status];
+        if (status == HIT_RESERVED) t_css.pending_hits += m_stats.at(streamID)[type][status];
 
-          if (status == RESERVATION_FAIL) t_css.res_fails += m_stats[streamID][type][status];
-        }
+        if (status == RESERVATION_FAIL) t_css.res_fails += m_stats.at(streamID)[type][status];
       }
     }
   }
@@ -946,44 +939,43 @@ void cache_stats::get_sub_stats_pw(struct cache_sub_stats_pw &css) const {
   struct cache_sub_stats_pw t_css;
   t_css.clear();
 
-  for (unsigned streamID = 0; streamID < NUM_STREAM_AVAILABLE; ++streamID) {
-    if (active_stream_mask[streamID]) {
-      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-          if (status == HIT || status == MISS || status == SECTOR_MISS ||
-              status == HIT_RESERVED)
-            t_css.accesses += m_stats_pw[streamID][type][status];
+  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+        if (status == HIT || status == MISS || status == SECTOR_MISS ||
+            status == HIT_RESERVED)
+          t_css.accesses += m_stats_pw.at(streamID)[type][status];
 
-          if (status == HIT) {
-            if (type == GLOBAL_ACC_R || type == CONST_ACC_R || type == INST_ACC_R) {
-              t_css.read_hits += m_stats_pw[streamID][type][status];
-            } else if (type == GLOBAL_ACC_W) {
-              t_css.write_hits += m_stats_pw[streamID][type][status];
-            }
+        if (status == HIT) {
+          if (type == GLOBAL_ACC_R || type == CONST_ACC_R || type == INST_ACC_R) {
+            t_css.read_hits += m_stats_pw.at(streamID)[type][status];
+          } else if (type == GLOBAL_ACC_W) {
+            t_css.write_hits += m_stats_pw.at(streamID)[type][status];
           }
+        }
 
-          if (status == MISS || status == SECTOR_MISS) {
-            if (type == GLOBAL_ACC_R || type == CONST_ACC_R || type == INST_ACC_R) {
-              t_css.read_misses += m_stats_pw[streamID][type][status];
-            } else if (type == GLOBAL_ACC_W) {
-              t_css.write_misses += m_stats_pw[streamID][type][status];
-            }
+        if (status == MISS || status == SECTOR_MISS) {
+          if (type == GLOBAL_ACC_R || type == CONST_ACC_R || type == INST_ACC_R) {
+            t_css.read_misses += m_stats_pw.at(streamID)[type][status];
+          } else if (type == GLOBAL_ACC_W) {
+            t_css.write_misses += m_stats_pw.at(streamID)[type][status];
           }
+        }
 
-          if (status == HIT_RESERVED) {
-            if (type == GLOBAL_ACC_R || type == CONST_ACC_R || type == INST_ACC_R) {
-              t_css.read_pending_hits += m_stats_pw[streamID][type][status];
-            } else if (type == GLOBAL_ACC_W) {
-              t_css.write_pending_hits += m_stats_pw[streamID][type][status];
-            }
+        if (status == HIT_RESERVED) {
+          if (type == GLOBAL_ACC_R || type == CONST_ACC_R || type == INST_ACC_R) {
+            t_css.read_pending_hits += m_stats_pw.at(streamID)[type][status];
+          } else if (type == GLOBAL_ACC_W) {
+            t_css.write_pending_hits += m_stats_pw.at(streamID)[type][status];
           }
+        }
 
-          if (status == RESERVATION_FAIL) {
-            if (type == GLOBAL_ACC_R || type == CONST_ACC_R || type == INST_ACC_R) {
-              t_css.read_res_fails += m_stats_pw[streamID][type][status];
-            } else if (type == GLOBAL_ACC_W) {
-              t_css.write_res_fails += m_stats_pw[streamID][type][status];
-            }
+        if (status == RESERVATION_FAIL) {
+          if (type == GLOBAL_ACC_R || type == CONST_ACC_R || type == INST_ACC_R) {
+            t_css.read_res_fails += m_stats_pw.at(streamID)[type][status];
+          } else if (type == GLOBAL_ACC_W) {
+            t_css.write_res_fails += m_stats_pw.at(streamID)[type][status];
           }
         }
       }
