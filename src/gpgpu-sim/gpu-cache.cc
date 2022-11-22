@@ -762,15 +762,35 @@ cache_stats cache_stats::operator+(const cache_stats &cs) {
   cache_stats ret;
   for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
     unsigned long long streamID = iter->first;
-    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-        ret(type, status, false, streamID) =
-            m_stats.at(streamID)[type][status] + cs(type, status, false, streamID);
+    ret.m_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, m_stats.at(streamID)));
+  }
+  for(auto iter = m_fail_stats.begin(); iter != m_fail_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    ret.m_fail_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, m_fail_stats.at(streamID)));
+  }
+  for(auto iter = cs.m_stats.begin(); iter != cs.m_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    if (ret.m_stats.find(streamID) == ret.m_stats.end()) {
+      ret.m_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, cs.m_stats.at(streamID)));
+    }
+    else {
+      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+            ret.m_stats.at(streamID)[type][status] += cs(type, status, false, streamID);
+        }
       }
-      for (unsigned status = 0; status < NUM_CACHE_RESERVATION_FAIL_STATUS;
-          ++status) {
-        ret(type, status, true, streamID) =
-            m_fail_stats.at(streamID)[type][status] + cs(type, status, true, streamID);
+    }
+  }
+  for(auto iter = cs.m_fail_stats.begin(); iter != cs.m_fail_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    if (ret.m_fail_stats.find(streamID) == ret.m_fail_stats.end()) {
+      ret.m_fail_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, cs.m_fail_stats.at(streamID)));
+    }
+    else {
+      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+        for (unsigned status = 0; status < NUM_CACHE_RESERVATION_FAIL_STATUS; ++status) {
+            ret.m_fail_stats.at(streamID)[type][status] += cs(type, status, true, streamID);
+        }
       }
     }
   }
@@ -787,18 +807,42 @@ cache_stats &cache_stats::operator+=(const cache_stats &cs) {
   ///
   /// Overloaded += operator to allow for simple stat accumulation
   ///
-  for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+  for(auto iter = cs.m_stats.begin(); iter != cs.m_stats.end(); ++iter) {
     unsigned long long streamID = iter->first;
-    for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
-      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-        m_stats.at(streamID)[type][status] += cs(type, status, false, streamID);
+    if (m_stats.find(streamID) == m_stats.end()) {
+      m_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, cs.m_stats.at(streamID)));
+    }
+    else {
+      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+            m_stats.at(streamID)[type][status] += cs(type, status, false, streamID);
+        }
       }
-      for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-        m_stats_pw.at(streamID)[type][status] += cs(type, status, false, streamID);
+    }
+  }
+  for(auto iter = cs.m_stats_pw.begin(); iter != cs.m_stats_pw.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    if (m_stats_pw.find(streamID) == m_stats_pw.end()) {
+      m_stats_pw.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, cs.m_stats_pw.at(streamID)));
+    }
+    else {
+      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+        for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+            m_stats_pw.at(streamID)[type][status] += cs(type, status, false, streamID);
+        }
       }
-      for (unsigned status = 0; status < NUM_CACHE_RESERVATION_FAIL_STATUS;
-          ++status) {
-        m_fail_stats.at(streamID)[type][status] += cs(type, status, true, streamID);
+    }
+  }
+  for(auto iter = cs.m_fail_stats.begin(); iter != cs.m_fail_stats.end(); ++iter) {
+    unsigned long long streamID = iter->first;
+    if (m_fail_stats.find(streamID) == m_fail_stats.end()) {
+      m_fail_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, cs.m_fail_stats.at(streamID)));
+    }
+    else {
+      for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
+        for (unsigned status = 0; status < NUM_CACHE_RESERVATION_FAIL_STATUS; ++status) {
+            m_fail_stats.at(streamID)[type][status] += cs(type, status, true, streamID);
+        }
       }
     }
   }
