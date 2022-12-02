@@ -667,6 +667,10 @@ void cache_stats::inc_stats(int access_type, int access_outcome, unsigned long l
     m_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, new_val));
   }
   m_stats.at(streamID)[access_type][access_outcome]++;
+
+  // test
+  if ((access_type == GLOBAL_ACC_R) && (access_outcome == HIT))
+    fprintf(stdout, "cache_stats::inc_stats streamID=%llu, [GLOBAL_ACC_R][HIT]=%llu\n", streamID, m_stats.at(streamID)[access_type][access_outcome]);
 }
 
 void cache_stats::inc_stats_pw(int access_type, int access_outcome, unsigned long long streamID) {
@@ -776,6 +780,10 @@ cache_stats cache_stats::operator+(const cache_stats &cs) {
     else {
       for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
         for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+            // test
+            if ((type == GLOBAL_ACC_R) && (status == HIT))
+              fprintf(stdout, "cache_stats::operator+ m_stats=%llu, cs=%llu\n", ret.m_stats.at(streamID)[type][status], cs(type, status, false, streamID));
+
             ret.m_stats.at(streamID)[type][status] += cs(type, status, false, streamID);
         }
       }
@@ -815,6 +823,10 @@ cache_stats &cache_stats::operator+=(const cache_stats &cs) {
     else {
       for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
         for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
+            // test
+            if ((type == GLOBAL_ACC_R) && (status == HIT))
+              fprintf(stdout, "cache_stats::operator+= m_stats=%llu, cs=%llu\n", m_stats.at(streamID)[type][status], cs(type, status, false, streamID));
+
             m_stats.at(streamID)[type][status] += cs(type, status, false, streamID);
         }
       }
@@ -863,7 +875,9 @@ void cache_stats::print_stats(FILE *fout, const char *cache_name) const {
   std::string m_cache_name = cache_name;
   for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
     unsigned long long streamID = iter->first;
+    total_access.clear();
     total_access.resize(NUM_MEM_ACCESS_TYPE, 0);
+    fprintf(stdout, "total_access reset for streamID=%llu, [GLOBAL_ACC_R]=%llu\n", streamID, total_access[GLOBAL_ACC_R]);
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
         fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %llu\n", m_cache_name.c_str(),
@@ -1833,18 +1847,6 @@ enum cache_request_status data_cache::process_tag_probe(
 enum cache_request_status data_cache::access(new_addr_type addr, mem_fetch *mf,
                                              unsigned time,
                                              std::list<cache_event> &events) {
-  /*
-  std::vector<kernel_info_t *> running_kernels = m_gpu->get_running_kernels();
-  for (int i = 0; i < running_kernels.size(); i++) {
-    kernel_info_t *kernel_info = running_kernels[i];
-    if (kernel_info != NULL && kernel_info->running()) {
-      dim3 block_dim = kernel_info->get_cta_dim();
-      CUstream_st *stream = kernel_info->get_default_stream_cta(block_dim);
-      fprintf(stdout, "streamID=%u\n", stream->get_uid());
-    }
-  }
-  */
-
   assert(mf->get_data_size() <= m_config.get_atom_sz());
   bool wr = mf->get_is_write();
   new_addr_type block_addr = m_config.block_addr(addr);
