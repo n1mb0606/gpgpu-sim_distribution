@@ -772,7 +772,22 @@ void increment_x_then_y_then_z(dim3 &i, const dim3 &bound) {
 }
 
 void gpgpu_sim::launch(kernel_info_t *kinfo) {
-  printf("gpgpu_sim::launch: kernelID = %u, streamID = %llu\n", kinfo->get_uid(), kinfo->get_streamid());
+  unsigned kernelID = kinfo->get_uid();
+  unsigned long long streamID = kinfo->get_streamid();
+  printf("gpgpu_sim::launch: kernelID = %u, streamID = %llu\n", kernelID, streamID);
+
+  kernel_time_t kernel_time = {GLOBAL_TIMER, 0};
+  if (gpu_kernel_time.find(streamID) == gpu_kernel_time.end()) {
+    std::map<unsigned, kernel_time_t> new_val;
+    new_val.insert(std::pair<unsigned, kernel_time_t>(kernelID, kernel_time));   ///// need fix
+    gpu_kernel_time.insert(std::pair<unsigned long long, std::map<unsigned, kernel_time_t>>(streamID, new_val));
+  }
+  else {
+    gpu_kernel_time.at(streamID).insert(std::pair<unsigned, kernel_time_t>(kernelID, kernel_time));
+    ////////// assume same kernel ID do not appear more than once
+  }
+  printf("gpgpu_sim::launch start_cycle=%llu, end_cycle=%llu\n", gpu_kernel_time.at(streamID).at(kernelID).start_cycle, gpu_kernel_time.at(streamID).at(kernelID).end_cycle);
+
   unsigned cta_size = kinfo->threads_per_cta();
   if (cta_size > m_shader_config->n_thread_per_shader) {
     printf(
@@ -886,6 +901,11 @@ unsigned gpgpu_sim::finished_kernel() {
 
 void gpgpu_sim::set_kernel_done(kernel_info_t *kernel) {
   unsigned uid = kernel->get_uid();
+  last_uid = uid;
+  unsigned long long streamID = kernel->get_streamid();
+  last_streamID = streamID;
+  gpu_kernel_time.at(streamID).at(uid).end_cycle = GLOBAL_TIMER;
+  printf("gpgpu_sim::set_kernel_done start_cycle=%llu, end_cycle=%llu\n", gpu_kernel_time.at(streamID).at(uid).start_cycle, gpu_kernel_time.at(streamID).at(uid).end_cycle);
   m_finished_kernel.push_back(uid);
   std::vector<kernel_info_t *>::iterator k;
   for (k = m_running_kernels.begin(); k != m_running_kernels.end(); k++) {
@@ -955,6 +975,8 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
   gpu_tot_sim_cycle_parition_util = 0;
   partiton_replys_in_parallel = 0;
   partiton_replys_in_parallel_total = 0;
+
+  gpu_kernel_time.clear();
 
   m_memory_partition_unit =
       new memory_partition_unit *[m_memory_config->m_n_mem];
@@ -1138,7 +1160,6 @@ void gpgpu_sim::init() {
 
 void gpgpu_sim::update_stats() {
   m_memory_stats->memlatstat_lat_pw();
-  //fprintf(stdout, "gpu_tot_sim_cycle=%d gpu_sim_cycle=%d\n", gpu_tot_sim_cycle, gpu_sim_cycle);
   gpu_tot_sim_cycle += gpu_sim_cycle;
   gpu_tot_sim_insn += gpu_sim_insn;
   gpu_tot_issued_cta += m_total_cta_launched;
@@ -1147,6 +1168,9 @@ void gpgpu_sim::update_stats() {
   partiton_reqs_in_parallel_util_total += partiton_reqs_in_parallel_util;
   gpu_tot_sim_cycle_parition_util += gpu_sim_cycle_parition_util;
   gpu_tot_occupancy += gpu_occupancy;
+
+  fprintf(stdout, "GLOBAL_TIMER=%llu, gpu_tot_sim_cycle=%llu, gpu_sim_cycle=%llu\n", GLOBAL_TIMER, gpu_tot_sim_cycle, gpu_sim_cycle);
+  fprintf(stdout, "gpgpu_sim::update_stats() last_streamID=%llu, last_uid=%llu, start_cycle=%llu, end_cycle=%llu, sim cycle for this kernel is %llu\n", last_streamID, last_uid, gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle - gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle + 1);
 
   gpu_sim_cycle = 0;
   partiton_reqs_in_parallel = 0;
@@ -1983,6 +2007,7 @@ void gpgpu_sim::cycle() {
       raise(SIGTRAP);  // Debug breakpoint
     }
     gpu_sim_cycle++;
+    GLOBAL_TIMER++;
     //fprintf(stdout, "gpu_sim_cycle %d\n", gpu_sim_cycle);
 
     if (g_interactive_debugger_enabled) gpgpu_debug();

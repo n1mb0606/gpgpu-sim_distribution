@@ -52,7 +52,6 @@ void mem_access_t::init(gpgpu_context *ctx) {
 void warp_inst_t::issue(const active_mask_t &mask, unsigned warp_id,
                         unsigned long long cycle, int dynamic_warp_id,
                         int sch_id) {
-                        //int sch_id, unsigned cta_id) {
   m_warp_active_mask = mask;
   m_warp_issued_mask = mask;
   m_uid = ++(m_config->gpgpu_ctx->warp_inst_sm_next_uid);
@@ -224,6 +223,7 @@ gpgpu_t::gpgpu_t(const gpgpu_functional_sim_config &config, gpgpu_context *ctx)
 
   gpu_sim_cycle = 0;
   gpu_tot_sim_cycle = 0;
+  GLOBAL_TIMER = 0;
 }
 
 new_addr_type line_size_based_tag_func(new_addr_type address,

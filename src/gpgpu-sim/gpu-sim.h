@@ -686,6 +686,14 @@ class gpgpu_sim : public gpgpu_t {
   occupancy_stats gpu_occupancy;
   occupancy_stats gpu_tot_occupancy;
 
+  typedef struct {
+    unsigned long long start_cycle;
+    unsigned long long end_cycle;
+  } kernel_time_t;
+  std::map<unsigned long long, std::map<unsigned, kernel_time_t>> gpu_kernel_time;
+  unsigned long long last_streamID;
+  unsigned long long last_uid;
+
   // performance counter for stalls due to congestion.
   unsigned int gpu_stall_dramfull;
   unsigned int gpu_stall_icnt2sh;
