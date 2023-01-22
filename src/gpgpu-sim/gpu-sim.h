@@ -625,9 +625,6 @@ class gpgpu_sim : public gpgpu_t {
   class memory_partition_unit **m_memory_partition_unit;
   class memory_sub_partition **m_memory_sub_partition;
 
-  std::vector<kernel_info_t *> m_running_kernels;
-  unsigned m_last_issued_kernel;
-
   std::list<unsigned> m_finished_kernel;
   // m_total_cta_launched == per-kernel count. gpu_tot_issued_cta == global
   // count.
@@ -679,6 +676,9 @@ class gpgpu_sim : public gpgpu_t {
   virtual void createSIMTCluster() = 0;
 
  public:
+  std::vector<kernel_info_t *> m_running_kernels;
+  unsigned m_last_issued_kernel;
+
   unsigned long long gpu_sim_insn;
   unsigned long long gpu_tot_sim_insn;
   unsigned long long gpu_sim_insn_last_update;

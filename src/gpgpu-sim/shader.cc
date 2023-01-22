@@ -1320,7 +1320,7 @@ void scheduler_unit::cycle() {
                   (!diff_exec_units ||
                    previous_issued_inst_exec_type != exec_unit_type_t::MEM)) {
                 m_shader->issue_warp(*m_mem_out, pI, active_mask, warp_id,
-                                     m_id, m_shader->get_kernel()->get_streamid());
+                                     m_id, (m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid());
                 issued++;
                 issued_inst = true;
                 warp_inst_issued = true;
@@ -1385,14 +1385,19 @@ void scheduler_unit::cycle() {
 
                 if (execute_on_SP) {
                   m_shader->issue_warp(*m_sp_out, pI, active_mask, warp_id,
-                                       m_id, m_shader->get_kernel()->get_streamid());
+                                       m_id, (m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
                   previous_issued_inst_exec_type = exec_unit_type_t::SP;
                 } else if (execute_on_INT) {
+                  fprintf(stdout, "m_shader->m_gpu%x\n", m_shader->m_gpu);
+                  fprintf(stdout, "m_shader->m_gpu->m_running_kernels%x\n", m_shader->m_gpu->m_running_kernels);
+                  fprintf(stdout, "m_shader->m_gpu->m_last_issued_kernel%x\n", m_shader->m_gpu->m_last_issued_kernel);
+                  fprintf(stdout, "m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel]%llu\n", m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel]);
+                  fprintf(stdout, "(m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid()%llu\n", (m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid());
                   m_shader->issue_warp(*m_int_out, pI, active_mask, warp_id,
-                                       m_id, m_shader->get_kernel()->get_streamid());
+                                       m_id, (m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
@@ -1409,7 +1414,7 @@ void scheduler_unit::cycle() {
 
                 if (dp_pipe_avail) {
                   m_shader->issue_warp(*m_dp_out, pI, active_mask, warp_id,
-                                       m_id, m_shader->get_kernel()->get_streamid());
+                                       m_id, (m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
@@ -1429,7 +1434,7 @@ void scheduler_unit::cycle() {
 
                 if (sfu_pipe_avail) {
                   m_shader->issue_warp(*m_sfu_out, pI, active_mask, warp_id,
-                                       m_id, m_shader->get_kernel()->get_streamid());
+                                       m_id, (m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
@@ -1445,7 +1450,7 @@ void scheduler_unit::cycle() {
 
                 if (tensor_core_pipe_avail) {
                   m_shader->issue_warp(*m_tensor_core_out, pI, active_mask,
-                                       warp_id, m_id, m_shader->get_kernel()->get_streamid());
+                                       warp_id, m_id, (m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
@@ -1466,7 +1471,7 @@ void scheduler_unit::cycle() {
 
                 if (spec_pipe_avail) {
                   m_shader->issue_warp(*spec_reg_set, pI, active_mask, warp_id,
-                                       m_id, m_shader->get_kernel()->get_streamid());
+                                       m_id, (m_shader->m_gpu->m_running_kernels[m_shader->m_gpu->m_last_issued_kernel])->get_streamid());
                   issued++;
                   issued_inst = true;
                   warp_inst_issued = true;
