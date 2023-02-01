@@ -667,10 +667,6 @@ void cache_stats::inc_stats(int access_type, int access_outcome, unsigned long l
     m_stats.insert(std::pair<unsigned long long, std::vector<std::vector<unsigned long long>>>(streamID, new_val));
   }
   m_stats.at(streamID)[access_type][access_outcome]++;
-
-  // test
-  if ((access_type == GLOBAL_ACC_R) && (access_outcome == HIT))
-    fprintf(stdout, "cache_stats::inc_stats streamID=%llu, [GLOBAL_ACC_R][HIT]=%llu\n", streamID, m_stats.at(streamID)[access_type][access_outcome]);
 }
 
 void cache_stats::inc_stats_pw(int access_type, int access_outcome, unsigned long long streamID) {
