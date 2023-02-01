@@ -71,7 +71,6 @@ void warp_inst_t::issue(const active_mask_t &mask, unsigned warp_id,
   m_warp_issued_mask = mask;
   m_uid = ++(m_config->gpgpu_ctx->warp_inst_sm_next_uid);
   m_streamID = streamID;
-  printf("warp_inst_t::issue: m_streamID=%llu\n", m_streamID);
   m_warp_id = warp_id;
   m_dynamic_warp_id = dynamic_warp_id;
   issue_cycle = cycle;

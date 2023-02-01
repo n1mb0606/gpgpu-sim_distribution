@@ -119,6 +119,7 @@ class shd_warp_t {
     m_done_exit = true;
     m_last_fetch = 0;
     m_next = 0;
+    m_streamID = (unsigned long long)-1;
 
     // Jin: cdp support
     m_cdp_latency = 0;
@@ -126,7 +127,8 @@ class shd_warp_t {
   }
   void init(address_type start_pc, unsigned cta_id, unsigned wid,
             const std::bitset<MAX_WARP_SIZE> &active,
-            unsigned dynamic_warp_id) {
+            unsigned dynamic_warp_id, unsigned long long streamID) {
+    m_streamID = streamID;
     m_cta_id = cta_id;
     m_warp_id = wid;
     m_dynamic_warp_id = dynamic_warp_id;
@@ -236,6 +238,7 @@ class shd_warp_t {
     m_inst_in_pipeline--;
   }
 
+  unsigned long long get_streamid() const { return m_streamID; }
   unsigned get_cta_id() const { return m_cta_id; }
 
   unsigned get_dynamic_warp_id() const { return m_dynamic_warp_id; }
@@ -248,6 +251,7 @@ class shd_warp_t {
  private:
   static const unsigned IBUFFER_SIZE = 2;
   class shader_core_ctx *m_shader;
+  unsigned long long m_streamID;
   unsigned m_cta_id;
   unsigned m_warp_id;
   unsigned m_warp_size;
@@ -2372,10 +2376,6 @@ class shader_core_ctx : public core_t {
   virtual void issue_warp(register_set &warp, const warp_inst_t *pI,
                           const active_mask_t &active_mask, unsigned warp_id,
                           unsigned sch_id);
-
-  virtual void issue_warp(register_set &warp, const warp_inst_t *pI,
-                          const active_mask_t &active_mask, unsigned warp_id,
-                          unsigned sch_id, unsigned long long streamID);
 
   void create_front_pipeline();
   void create_schedulers();

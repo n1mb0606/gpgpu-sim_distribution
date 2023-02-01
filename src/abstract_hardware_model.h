@@ -1057,13 +1057,13 @@ class warp_inst_t : public inst_t {
   // constructors
   warp_inst_t() {
     m_uid = 0;
-    m_streamID = 0;
+    m_streamID = (unsigned long long)-1;
     m_empty = true;
     m_config = NULL;
   }
   warp_inst_t(const core_config *config) {
     m_uid = 0;
-    m_streamID = 0;
+    m_streamID = (unsigned long long)-1;
     assert(config->warp_size <= MAX_WARP_SIZE);
     m_config = config;
     m_empty = true;
