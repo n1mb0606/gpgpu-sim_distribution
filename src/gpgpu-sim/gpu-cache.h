@@ -1203,9 +1203,9 @@ class cache_stats {
                                 bool fail_outcome, unsigned long long streamID=0) const;
   cache_stats operator+(const cache_stats &cs);
   cache_stats &operator+=(const cache_stats &cs);
-  void print_stats(FILE *fout, const char *cache_name = "Cache_stats") const;
+  void print_stats(FILE *fout, const char *cache_name = "Cache_stats", unsigned long long streamID = -1) const;
   void print_fail_stats(FILE *fout,
-                        const char *cache_name = "Cache_fail_stats") const;
+                        const char *cache_name = "Cache_fail_stats", unsigned long long streamID = -1) const;
 
   unsigned long long get_stats(enum mem_access_type *access_type,
                                unsigned num_access_type,

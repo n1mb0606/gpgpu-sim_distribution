@@ -856,7 +856,7 @@ cache_stats &cache_stats::operator+=(const cache_stats &cs) {
   return *this;
 }
 
-void cache_stats::print_stats(FILE *fout, const char *cache_name) const {
+void cache_stats::print_stats(FILE *fout, const char *cache_name, unsigned long long streamID) const {
   ///
   /// Print out each non-zero cache statistic for every memory access type and
   /// status "cache_name" defaults to "Cache_stats" when no argument is
@@ -866,45 +866,51 @@ void cache_stats::print_stats(FILE *fout, const char *cache_name) const {
   std::vector<unsigned> total_access;
   std::string m_cache_name = cache_name;
   for(auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
-    unsigned long long streamID = iter->first;
+    unsigned long long streamid = iter->first;
+    // when streamID is specified, skip stats for all other streams, otherwise, print stats from all streams
+    if((streamID != -1) && (streamid != streamID))
+      continue;
     total_access.clear();
     total_access.resize(NUM_MEM_ACCESS_TYPE, 0);
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
         fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %llu\n", m_cache_name.c_str(),
-                streamID,
+                streamid,
                 mem_access_type_str((enum mem_access_type)type),
                 cache_request_status_str((enum cache_request_status)status),
-                m_stats.at(streamID)[type][status]);
+                m_stats.at(streamid)[type][status]);
 
         if (status != RESERVATION_FAIL && status != MSHR_HIT)
           // MSHR_HIT is a special type of SECTOR_MISS
           // so its already included in the SECTOR_MISS
-          total_access[type] += m_stats.at(streamID)[type][status];
+          total_access[type] += m_stats.at(streamid)[type][status];
       }
     }
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       if (total_access[type] > 0)
         fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %u\n", m_cache_name.c_str(),
-                streamID,
+                streamid,
                 mem_access_type_str((enum mem_access_type)type), "TOTAL_ACCESS",
                 total_access[type]);
     }
   }
 }
 
-void cache_stats::print_fail_stats(FILE *fout, const char *cache_name) const {
+void cache_stats::print_fail_stats(FILE *fout, const char *cache_name, unsigned long long streamID) const {
   std::string m_cache_name = cache_name;
   for(auto iter = m_fail_stats.begin(); iter != m_fail_stats.end(); ++iter) {
-    unsigned long long streamID = iter->first;
+    unsigned long long streamid = iter->first;
+    // when streamID is specified, skip stats for all other streams, otherwise, print stats from all streams
+    if((streamID != -1) && (streamid != streamID))
+      continue;
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       for (unsigned fail = 0; fail < NUM_CACHE_RESERVATION_FAIL_STATUS; ++fail) {
-        if (m_fail_stats.at(streamID)[type][fail] > 0) {
+        if (m_fail_stats.at(streamid)[type][fail] > 0) {
           fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %llu\n", m_cache_name.c_str(),
-                  streamID,
+                  streamid,
                   mem_access_type_str((enum mem_access_type)type),
                   cache_fail_status_str((enum cache_reservation_fail_reason)fail),
-                  m_fail_stats.at(streamID)[type][fail]);
+                  m_fail_stats.at(streamid)[type][fail]);
         }
       }
     }
