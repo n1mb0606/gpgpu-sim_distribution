@@ -856,7 +856,7 @@ cache_stats &cache_stats::operator+=(const cache_stats &cs) {
   return *this;
 }
 
-void cache_stats::print_stats(FILE *fout, const char *cache_name, unsigned long long streamID) const {
+void cache_stats::print_stats(FILE *fout, unsigned long long streamID, const char *cache_name) const {
   ///
   /// Print out each non-zero cache statistic for every memory access type and
   /// status "cache_name" defaults to "Cache_stats" when no argument is
@@ -896,7 +896,7 @@ void cache_stats::print_stats(FILE *fout, const char *cache_name, unsigned long 
   }
 }
 
-void cache_stats::print_fail_stats(FILE *fout, const char *cache_name, unsigned long long streamID) const {
+void cache_stats::print_fail_stats(FILE *fout, unsigned long long streamID, const char *cache_name) const {
   std::string m_cache_name = cache_name;
   for(auto iter = m_fail_stats.begin(); iter != m_fail_stats.end(); ++iter) {
     unsigned long long streamid = iter->first;

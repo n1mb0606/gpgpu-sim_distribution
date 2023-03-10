@@ -232,7 +232,7 @@ class kernel_info_t {
   //      m_num_cores_running=0;
   //      m_param_mem=NULL;
   //   }
-  kernel_info_t(dim3 gridDim, dim3 blockDim, class function_info *entry, unsigned long long streamID=0);
+  kernel_info_t(dim3 gridDim, dim3 blockDim, class function_info *entry, unsigned long long streamID);
   kernel_info_t(
       dim3 gridDim, dim3 blockDim, class function_info *entry,
       std::map<std::string, const struct cudaArray *> nameToCudaArray,
@@ -1082,9 +1082,6 @@ class warp_inst_t : public inst_t {
   void do_atomic(bool forceDo = false);
   void do_atomic(const active_mask_t &access_mask, bool forceDo = false);
   void clear() { m_empty = true; }
-
-  void issue(const active_mask_t &mask, unsigned warp_id,
-             unsigned long long cycle, int dynamic_warp_id, int sch_id);
 
   void issue(const active_mask_t &mask, unsigned warp_id,
              unsigned long long cycle, int dynamic_warp_id, int sch_id,

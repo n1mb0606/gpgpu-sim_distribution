@@ -1191,21 +1191,20 @@ class cache_stats {
   void clear();
   // Clear AerialVision cache stats after each window
   void clear_pw();
-  void inc_stats(int access_type, int access_outcome, unsigned long long streamID=0);
+  void inc_stats(int access_type, int access_outcome, unsigned long long streamID);
   // Increment AerialVision cache stats
-  void inc_stats_pw(int access_type, int access_outcome, unsigned long long streamID=0);
-  void inc_fail_stats(int access_type, int fail_outcome, unsigned long long streamID=0);
+  void inc_stats_pw(int access_type, int access_outcome, unsigned long long streamID);
+  void inc_fail_stats(int access_type, int fail_outcome, unsigned long long streamID);
   enum cache_request_status select_stats_status(
       enum cache_request_status probe, enum cache_request_status access) const;
   unsigned long long &operator()(int access_type, int access_outcome,
-                                 bool fail_outcome, unsigned long long streamID=0);
+                                 bool fail_outcome, unsigned long long streamID);
   unsigned long long operator()(int access_type, int access_outcome,
-                                bool fail_outcome, unsigned long long streamID=0) const;
+                                bool fail_outcome, unsigned long long streamID) const;
   cache_stats operator+(const cache_stats &cs);
   cache_stats &operator+=(const cache_stats &cs);
-  void print_stats(FILE *fout, const char *cache_name = "Cache_stats", unsigned long long streamID = -1) const;
-  void print_fail_stats(FILE *fout,
-                        const char *cache_name = "Cache_fail_stats", unsigned long long streamID = -1) const;
+  void print_stats(FILE *fout, unsigned long long streamID, const char *cache_name = "Cache_stats") const;
+  void print_fail_stats(FILE *fout, unsigned long long streamID, const char *cache_name = "Cache_fail_stats") const;
 
   unsigned long long get_stats(enum mem_access_type *access_type,
                                unsigned num_access_type,

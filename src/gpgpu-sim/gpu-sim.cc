@@ -1451,10 +1451,9 @@ void gpgpu_sim::gpu_print_stat(unsigned long long streamID) {
     m_cluster[i]->get_cache_stats(core_cache_stats);
   }
   printf("\nTotal_core_cache_stats:\n");
-  core_cache_stats.print_stats(stdout, "Total_core_cache_stats_breakdown", streamID);
+  core_cache_stats.print_stats(stdout, streamID, "Total_core_cache_stats_breakdown");
   printf("\nTotal_core_cache_fail_stats:\n");
-  core_cache_stats.print_fail_stats(stdout,
-                                    "Total_core_cache_fail_stats_breakdown", streamID);
+  core_cache_stats.print_fail_stats(stdout, streamID, "Total_core_cache_fail_stats_breakdown");
   shader_print_scheduler_stat(stdout, false);
 
   m_shader_stats->print(stdout);
@@ -1518,9 +1517,9 @@ void gpgpu_sim::gpu_print_stat(unsigned long long streamID) {
       printf("L2_total_cache_reservation_fails = %llu\n",
              total_l2_css.res_fails);
       printf("L2_total_cache_breakdown:\n");
-      l2_stats.print_stats(stdout, "L2_cache_stats_breakdown", streamID);
+      l2_stats.print_stats(stdout, streamID, "L2_cache_stats_breakdown");
       printf("L2_total_cache_reservation_fail_breakdown:\n");
-      l2_stats.print_fail_stats(stdout, "L2_cache_stats_fail_breakdown", streamID);
+      l2_stats.print_fail_stats(stdout, streamID, "L2_cache_stats_fail_breakdown");
       total_l2_css.print_port_stats(stdout, "L2_cache");
     }
   }

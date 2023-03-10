@@ -540,7 +540,7 @@ class gpgpu_sim : public gpgpu_t {
            (m_config.gpu_max_completed_cta_opt &&
             (gpu_completed_cta >= m_config.gpu_max_completed_cta_opt));
   }
-  void print_stats(unsigned long long streamID = -1);
+  void print_stats(unsigned long long streamID);
   void update_stats();
   void deadlock_check();
   void inc_completed_cta() { gpu_completed_cta++; }
@@ -569,7 +569,7 @@ class gpgpu_sim : public gpgpu_t {
   void decrement_kernel_latency();
 
   const gpgpu_sim_config &get_config() const { return m_config; }
-  void gpu_print_stat(unsigned long long streamID = -1);
+  void gpu_print_stat(unsigned long long streamID);
   void dump_pipeline(int mask, int s, int m) const;
 
   void perf_memcpy_to_gpu(size_t dst_start_addr, size_t count);
@@ -625,6 +625,9 @@ class gpgpu_sim : public gpgpu_t {
   class memory_partition_unit **m_memory_partition_unit;
   class memory_sub_partition **m_memory_sub_partition;
 
+  std::vector<kernel_info_t *> m_running_kernels;
+  unsigned m_last_issued_kernel;
+
   std::list<unsigned> m_finished_kernel;
   // m_total_cta_launched == per-kernel count. gpu_tot_issued_cta == global
   // count.
@@ -676,9 +679,6 @@ class gpgpu_sim : public gpgpu_t {
   virtual void createSIMTCluster() = 0;
 
  public:
-  std::vector<kernel_info_t *> m_running_kernels;
-  unsigned m_last_issued_kernel;
-
   unsigned long long gpu_sim_insn;
   unsigned long long gpu_tot_sim_insn;
   unsigned long long gpu_sim_insn_last_update;
@@ -721,6 +721,7 @@ class gpgpu_sim : public gpgpu_t {
  public:
   bool is_functional_sim() { return m_functional_sim; }
   kernel_info_t *get_functional_kernel() { return m_functional_sim_kernel; }
+  std::vector<kernel_info_t *> get_running_kernels() { return m_running_kernels; }
   void functional_launch(kernel_info_t *k) {
     m_functional_sim = true;
     m_functional_sim_kernel = k;
