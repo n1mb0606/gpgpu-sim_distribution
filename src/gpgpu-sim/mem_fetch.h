@@ -57,6 +57,10 @@ class mem_fetch {
             unsigned ctrl_size, unsigned wid, unsigned sid, unsigned tpc,
             const memory_config *config, unsigned long long cycle,
             mem_fetch *original_mf = NULL, mem_fetch *original_wr_mf = NULL);
+  mem_fetch(const mem_access_t &access, unsigned long long streamID,
+            unsigned ctrl_size, unsigned wid, unsigned sid, unsigned tpc,
+            const memory_config *config, unsigned long long cycle,
+            mem_fetch *original_mf = NULL, mem_fetch *original_wr_mf = NULL);
   ~mem_fetch();
 
   void set_status(enum mem_fetch_status status, unsigned long long cycle);
@@ -105,7 +109,7 @@ class mem_fetch {
   unsigned get_timestamp() const { return m_timestamp; }
   unsigned get_return_timestamp() const { return m_timestamp2; }
   unsigned get_icnt_receive_time() const { return m_icnt_receive_time; }
-  unsigned long long get_streamID() const { return m_inst.get_streamid(); }
+  unsigned long long get_streamID() const { return m_streamID; }
 
   enum mem_access_type get_access_type() const { return m_access.get_type(); }
   const active_mask_t &get_access_warp_mask() const {
@@ -163,6 +167,8 @@ class mem_fetch {
 
   // requesting instruction (put last so mem_fetch prints nicer in gdb)
   warp_inst_t m_inst;
+
+  unsigned long long m_streamID;
 
   static unsigned sm_next_mf_request_uid;
 
