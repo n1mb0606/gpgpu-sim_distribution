@@ -305,7 +305,7 @@ void stream_manager::stop_all_running_kernels() {
   std::vector<kernel_info_t *> running_kernels = m_gpu->get_running_kernels();
   for(kernel_info_t * k : running_kernels) {
     if(k != NULL) {
-      finished_streams.push_back(k->get_streamid());
+      finished_streams.push_back(k->get_streamID());
     }
   }
 

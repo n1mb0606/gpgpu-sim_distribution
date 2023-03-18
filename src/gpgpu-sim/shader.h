@@ -238,7 +238,7 @@ class shd_warp_t {
     m_inst_in_pipeline--;
   }
 
-  unsigned long long get_streamid() const { return m_streamID; }
+  unsigned long long get_streamID() const { return m_streamID; }
   unsigned get_cta_id() const { return m_cta_id; }
 
   unsigned get_dynamic_warp_id() const { return m_dynamic_warp_id; }

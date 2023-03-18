@@ -46,7 +46,7 @@ mem_fetch::mem_fetch(const mem_access_t &access, const warp_inst_t *inst,
   m_access = access;
   if (inst) {
     m_inst = *inst;
-    m_streamID = inst->get_streamid();
+    m_streamID = inst->get_streamID();
     assert(wid == m_inst.warp_id());
   }
   m_data_size = access.get_size();

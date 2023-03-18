@@ -773,7 +773,7 @@ void increment_x_then_y_then_z(dim3 &i, const dim3 &bound) {
 
 void gpgpu_sim::launch(kernel_info_t *kinfo) {
   unsigned kernelID = kinfo->get_uid();
-  unsigned long long streamID = kinfo->get_streamid();
+  unsigned long long streamID = kinfo->get_streamID();
   printf("gpgpu_sim::launch: kernelID = %u, streamID = %llu\n", kernelID, streamID);
 
   kernel_time_t kernel_time = {GLOBAL_TIMER, 0};
@@ -902,7 +902,7 @@ unsigned gpgpu_sim::finished_kernel() {
 void gpgpu_sim::set_kernel_done(kernel_info_t *kernel) {
   unsigned uid = kernel->get_uid();
   last_uid = uid;
-  unsigned long long streamID = kernel->get_streamid();
+  unsigned long long streamID = kernel->get_streamID();
   last_streamID = streamID;
   gpu_kernel_time.at(streamID).at(uid).end_cycle = GLOBAL_TIMER;
   printf("gpgpu_sim::set_kernel_done start_cycle=%llu, end_cycle=%llu\n", gpu_kernel_time.at(streamID).at(uid).start_cycle, gpu_kernel_time.at(streamID).at(uid).end_cycle);

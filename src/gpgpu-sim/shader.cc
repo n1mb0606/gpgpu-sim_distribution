@@ -571,7 +571,7 @@ void shader_core_ctx::init_warps(unsigned cta_id, unsigned start_thread,
         start_pc = pc;
       }
 
-      m_warp[i]->init(start_pc, cta_id, i, active_threads, m_dynamic_warp_id, kernel.get_streamid());
+      m_warp[i]->init(start_pc, cta_id, i, active_threads, m_dynamic_warp_id, kernel.get_streamID());
       ++m_dynamic_warp_id;
       m_not_completed += n_active;
       ++m_active_warps;
@@ -983,7 +983,7 @@ void shader_core_ctx::fetch() {
           // mem_fetch *mf = m_mem_fetch_allocator->alloc()
           mem_access_t acc(INST_ACC_R, ppc, nbytes, false, m_gpu->gpgpu_ctx);
           mem_fetch *mf = new mem_fetch(
-              acc, m_warp[warp_id]->get_kernel_info()->get_streamid(), READ_PACKET_SIZE,
+              acc, m_warp[warp_id]->get_kernel_info()->get_streamID(), READ_PACKET_SIZE,
               warp_id, m_sid, m_tpc, m_memory_config,
               m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle);
           std::list<cache_event> events;
@@ -1042,7 +1042,7 @@ void shader_core_ctx::issue_warp(register_set &pipe_reg_set,
   (*pipe_reg)->issue(active_mask, warp_id,
                      m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle,
                      m_warp[warp_id]->get_dynamic_warp_id(),
-                     sch_id, m_warp[warp_id]->get_streamid());  // dynamic instruction information
+                     sch_id, m_warp[warp_id]->get_streamID());  // dynamic instruction information
   m_stats->shader_cycle_distro[2 + (*pipe_reg)->active_count()]++;
   func_exec_inst(**pipe_reg);
 
