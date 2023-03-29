@@ -232,7 +232,7 @@ class kernel_info_t {
   //      m_num_cores_running=0;
   //      m_param_mem=NULL;
   //   }
-  kernel_info_t(dim3 gridDim, dim3 blockDim, class function_info *entry);
+  kernel_info_t(dim3 gridDim, dim3 blockDim, class function_info *entry, unsigned long long streamID);
   kernel_info_t(
       dim3 gridDim, dim3 blockDim, class function_info *entry,
       std::map<std::string, const struct cudaArray *> nameToCudaArray,
@@ -291,6 +291,7 @@ class kernel_info_t {
            m_next_tid.x < m_block_dim.x;
   }
   unsigned get_uid() const { return m_uid; }
+  unsigned long long get_streamID() const { return m_streamID; }
   std::string get_name() const { return name(); }
   std::string name() const;
 
@@ -324,7 +325,8 @@ class kernel_info_t {
 
   class function_info *m_kernel_entry;
 
-  unsigned m_uid;
+  unsigned m_uid;     // Kernel ID
+  unsigned long long m_streamID;
 
   // These maps contain the snapshot of the texture mappings at kernel launch
   std::map<std::string, const struct cudaArray *> m_NameToCudaArray;
@@ -597,6 +599,7 @@ class gpgpu_t {
   // Move some cycle core stats here instead of being global
   unsigned long long gpu_sim_cycle;
   unsigned long long gpu_tot_sim_cycle;
+  unsigned long long GLOBAL_TIMER;
 
   void *gpu_malloc(size_t size);
   void *gpu_mallocarray(size_t count);
@@ -900,7 +903,7 @@ class mem_fetch_allocator {
  public:
   virtual mem_fetch *alloc(new_addr_type addr, mem_access_type type,
                            unsigned size, bool wr,
-                           unsigned long long cycle) const = 0;
+                           unsigned long long cycle, unsigned long long streamID) const = 0;
   virtual mem_fetch *alloc(const class warp_inst_t &inst,
                            const mem_access_t &access,
                            unsigned long long cycle) const = 0;
@@ -910,7 +913,7 @@ class mem_fetch_allocator {
                            const mem_access_sector_mask_t &sector_mask,
                            unsigned size, bool wr, unsigned long long cycle,
                            unsigned wid, unsigned sid, unsigned tpc,
-                           mem_fetch *original_mf) const = 0;
+                           mem_fetch *original_mf, unsigned long long streamID) const = 0;
 };
 
 // the maximum number of destination, source, or address uarch operands in a
@@ -1054,11 +1057,13 @@ class warp_inst_t : public inst_t {
   // constructors
   warp_inst_t() {
     m_uid = 0;
+    m_streamID = (unsigned long long)-1;
     m_empty = true;
     m_config = NULL;
   }
   warp_inst_t(const core_config *config) {
     m_uid = 0;
+    m_streamID = (unsigned long long)-1;
     assert(config->warp_size <= MAX_WARP_SIZE);
     m_config = config;
     m_empty = true;
@@ -1079,7 +1084,8 @@ class warp_inst_t : public inst_t {
   void clear() { m_empty = true; }
 
   void issue(const active_mask_t &mask, unsigned warp_id,
-             unsigned long long cycle, int dynamic_warp_id, int sch_id);
+             unsigned long long cycle, int dynamic_warp_id, int sch_id,
+             unsigned long long streamID);
 
   const active_mask_t &get_active_mask() const { return m_warp_active_mask; }
   void completed(unsigned long long cycle)
@@ -1207,11 +1213,13 @@ class warp_inst_t : public inst_t {
 
   void print(FILE *fout) const;
   unsigned get_uid() const { return m_uid; }
+  unsigned long long get_streamID() const { return m_streamID; }
   unsigned get_schd_id() const { return m_scheduler_id; }
   active_mask_t get_warp_active_mask() const { return m_warp_active_mask; }
 
  protected:
   unsigned m_uid;
+  unsigned long long m_streamID;
   bool m_empty;
   bool m_cache_hit;
   unsigned long long issue_cycle;
