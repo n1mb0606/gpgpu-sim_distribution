@@ -1173,8 +1173,8 @@ void gpgpu_sim::update_stats() {
   gpu_tot_sim_cycle_parition_util += gpu_sim_cycle_parition_util;
   gpu_tot_occupancy += gpu_occupancy;
 
-  fprintf(stdout, "GLOBAL_TIMER=%llu, gpu_tot_sim_cycle=%llu, gpu_sim_cycle=%llu\n", GLOBAL_TIMER, gpu_tot_sim_cycle, gpu_sim_cycle);
-  fprintf(stdout, "gpgpu_sim::update_stats() last_streamID=%llu, last_uid=%llu, start_cycle=%llu, end_cycle=%llu, sim cycle for this kernel is %llu\n", last_streamID, last_uid, gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle - gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle + 1);
+  // fprintf(stdout, "GLOBAL_TIMER=%llu, gpu_tot_sim_cycle=%llu, gpu_sim_cycle=%llu\n", GLOBAL_TIMER, gpu_tot_sim_cycle, gpu_sim_cycle);
+  // fprintf(stdout, "gpgpu_sim::update_stats() last_streamID=%llu, last_uid=%llu, start_cycle=%llu, end_cycle=%llu, sim cycle for this kernel is %llu\n", last_streamID, last_uid, gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle - gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle + 1);
 
   gpu_sim_cycle = 0;
   partiton_reqs_in_parallel = 0;
