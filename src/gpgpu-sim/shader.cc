@@ -177,7 +177,7 @@ void shader_core_ctx::create_front_pipeline() {
   snprintf(name, STRSIZE, "L1I_%03d", m_sid);
   m_L1I = new read_only_cache(name, m_config->m_L1I_config, m_sid,
                               get_shader_instruction_cache_id(), m_icnt,
-                              IN_L1I_MISS_QUEUE);
+                              IN_L1I_MISS_QUEUE, OTHER_GPU_CACHE);
 }
 
 void shader_core_ctx::create_schedulers() {
@@ -2468,7 +2468,7 @@ void ldst_unit::init(mem_fetch_interface *icnt,
                         IN_SHADER_L1T_ROB);
   m_L1C = new read_only_cache(L1C_name, m_config->m_L1C_config, m_sid,
                               get_shader_constant_cache_id(), icnt,
-                              IN_L1C_MISS_QUEUE);
+                              IN_L1C_MISS_QUEUE, OTHER_GPU_CACHE);
   m_L1D = NULL;
   m_mem_rc = NO_RC_FAIL;
   m_num_writeback_clients =
@@ -2495,7 +2495,7 @@ ldst_unit::ldst_unit(mem_fetch_interface *icnt,
     snprintf(L1D_name, STRSIZE, "L1D_%03d", m_sid);
     m_L1D = new l1_cache(L1D_name, m_config->m_L1D_config, m_sid,
                          get_shader_normal_cache_id(), m_icnt, m_mf_allocator,
-                         IN_L1D_MISS_QUEUE, core->get_gpu());
+                         IN_L1D_MISS_QUEUE, core->get_gpu(), L1_GPU_CACHE);
 
     l1_latency_queue.resize(m_config->m_L1D_config.l1_banks);
     assert(m_config->m_L1D_config.l1_latency > 0);
