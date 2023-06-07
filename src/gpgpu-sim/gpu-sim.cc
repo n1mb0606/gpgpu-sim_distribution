@@ -893,7 +893,10 @@ kernel_info_t *gpgpu_sim::select_kernel() {
 }
 
 unsigned gpgpu_sim::finished_kernel() {
-  if (m_finished_kernel.empty()) return 0;
+  if (m_finished_kernel.empty()) {
+    last_streamID = -1;
+    return 0;
+  } 
   unsigned result = m_finished_kernel.front();
   m_finished_kernel.pop_front();
   return result;
@@ -975,6 +978,7 @@ gpgpu_sim::gpgpu_sim(const gpgpu_sim_config &config, gpgpu_context *ctx)
   gpu_tot_sim_cycle_parition_util = 0;
   partiton_replys_in_parallel = 0;
   partiton_replys_in_parallel_total = 0;
+  last_streamID = -1;
 
   gpu_kernel_time.clear();
 
@@ -1169,8 +1173,8 @@ void gpgpu_sim::update_stats() {
   gpu_tot_sim_cycle_parition_util += gpu_sim_cycle_parition_util;
   gpu_tot_occupancy += gpu_occupancy;
 
-  fprintf(stdout, "GLOBAL_TIMER=%llu, gpu_tot_sim_cycle=%llu, gpu_sim_cycle=%llu\n", GLOBAL_TIMER, gpu_tot_sim_cycle, gpu_sim_cycle);
-  fprintf(stdout, "gpgpu_sim::update_stats() last_streamID=%llu, last_uid=%llu, start_cycle=%llu, end_cycle=%llu, sim cycle for this kernel is %llu\n", last_streamID, last_uid, gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle - gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle + 1);
+  // fprintf(stdout, "GLOBAL_TIMER=%llu, gpu_tot_sim_cycle=%llu, gpu_sim_cycle=%llu\n", GLOBAL_TIMER, gpu_tot_sim_cycle, gpu_sim_cycle);
+  // fprintf(stdout, "gpgpu_sim::update_stats() last_streamID=%llu, last_uid=%llu, start_cycle=%llu, end_cycle=%llu, sim cycle for this kernel is %llu\n", last_streamID, last_uid, gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle, gpu_kernel_time.at(last_streamID).at(last_uid).end_cycle - gpu_kernel_time.at(last_streamID).at(last_uid).start_cycle + 1);
 
   gpu_sim_cycle = 0;
   partiton_reqs_in_parallel = 0;
@@ -1961,8 +1965,10 @@ void gpgpu_sim::cycle() {
         if (mf) partiton_reqs_in_parallel_per_cycle++;
       }
       m_memory_sub_partition[i]->cache_cycle(gpu_sim_cycle + gpu_tot_sim_cycle);
-      m_memory_sub_partition[i]->accumulate_L2cache_stats(
-          m_power_stats->pwr_mem_stat->l2_cache_stats[CURRENT_STAT_IDX]);
+      if (m_config.g_power_simulation_enabled) {
+        m_memory_sub_partition[i]->accumulate_L2cache_stats(
+            m_power_stats->pwr_mem_stat->l2_cache_stats[CURRENT_STAT_IDX]);
+      }
     }
   }
   partiton_reqs_in_parallel += partiton_reqs_in_parallel_per_cycle;
@@ -1984,14 +1990,16 @@ void gpgpu_sim::cycle() {
         *active_sms += m_cluster[i]->get_n_active_sms();
       }
       // Update core icnt/cache stats for AccelWattch
-      m_cluster[i]->get_icnt_stats(
-          m_power_stats->pwr_mem_stat->n_simt_to_mem[CURRENT_STAT_IDX][i],
-          m_power_stats->pwr_mem_stat->n_mem_to_simt[CURRENT_STAT_IDX][i]);
-      m_cluster[i]->get_cache_stats(
-          m_power_stats->pwr_mem_stat->core_cache_stats[CURRENT_STAT_IDX]);
-      m_cluster[i]->get_current_occupancy(
-          gpu_occupancy.aggregate_warp_slot_filled,
-          gpu_occupancy.aggregate_theoretical_warp_slots);
+      if (m_config.g_power_simulation_enabled) {
+        m_cluster[i]->get_icnt_stats(
+            m_power_stats->pwr_mem_stat->n_simt_to_mem[CURRENT_STAT_IDX][i],
+            m_power_stats->pwr_mem_stat->n_mem_to_simt[CURRENT_STAT_IDX][i]);
+        m_cluster[i]->get_cache_stats(
+            m_power_stats->pwr_mem_stat->core_cache_stats[CURRENT_STAT_IDX]);
+        m_cluster[i]->get_current_occupancy(
+            gpu_occupancy.aggregate_warp_slot_filled,
+            gpu_occupancy.aggregate_theoretical_warp_slots);
+      }
     }
     float temp = 0;
     for (unsigned i = 0; i < m_shader_config->num_shader(); i++) {
