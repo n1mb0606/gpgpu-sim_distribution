@@ -693,6 +693,8 @@ class gpgpu_sim : public gpgpu_t {
   std::map<unsigned long long, std::map<unsigned, kernel_time_t>> gpu_kernel_time;
   unsigned long long last_streamID;
   unsigned long long last_uid;
+  cache_stats aggregated_l1_stats;
+  cache_stats aggregated_l2_stats;
 
   // performance counter for stalls due to congestion.
   unsigned int gpu_stall_dramfull;

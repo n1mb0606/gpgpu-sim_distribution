@@ -1261,12 +1261,13 @@ class baseline_cache : public cache_t {
  public:
   baseline_cache(const char *name, cache_config &config, int core_id,
                  int type_id, mem_fetch_interface *memport,
-                 enum mem_fetch_status status, enum cache_gpu_level level)
+                 enum mem_fetch_status status, enum cache_gpu_level level, gpgpu_sim *gpu)
       : m_config(config),
         m_tag_array(new tag_array(config, core_id, type_id)),
         m_mshrs(config.m_mshr_entries, config.m_mshr_max_merge),
         m_bandwidth_management(config),
-        m_level(level) {
+        m_level(level), 
+        m_gpu(gpu) {
     init(name, config, memport, status);
   }
 
@@ -1334,6 +1335,15 @@ class baseline_cache : public cache_t {
   bool fill_port_free() const {
     return m_bandwidth_management.fill_port_free();
   }
+  void inc_aggregated_stats(cache_request_status status,
+                            cache_request_status cache_status, mem_fetch *mf,
+                            enum cache_gpu_level level);
+  void inc_aggregated_fail_stats(cache_request_status status,
+                            cache_request_status cache_status, mem_fetch *mf,
+                            enum cache_gpu_level level);
+  void inc_aggregated_stats_pw(cache_request_status status,
+                            cache_request_status cache_status, mem_fetch *mf,
+                            enum cache_gpu_level level);
 
   // This is a gapping hole we are poking in the system to quickly handle
   // filling the cache on cudamemcopies. We don't care about anything other than
@@ -1366,6 +1376,7 @@ class baseline_cache : public cache_t {
   enum mem_fetch_status m_miss_queue_status;
   mem_fetch_interface *m_memport;
   cache_gpu_level m_level;
+  gpgpu_sim *m_gpu;
 
   struct extra_mf_fields {
     extra_mf_fields() { m_valid = false; }
@@ -1452,9 +1463,10 @@ class read_only_cache : public baseline_cache {
  public:
   read_only_cache(const char *name, cache_config &config, int core_id,
                   int type_id, mem_fetch_interface *memport,
-                  enum mem_fetch_status status, enum cache_gpu_level level)
-      : baseline_cache(name, config, core_id, type_id, memport, status, level) {
-  }
+                  enum mem_fetch_status status, enum cache_gpu_level level,
+                  gpgpu_sim *gpu)
+      : baseline_cache(name, config, core_id, type_id, memport, status, level,
+                       gpu) {}
 
   /// Access cache for read_only_cache: returns RESERVATION_FAIL if request
   /// could not be accepted (for any reason)
@@ -1478,8 +1490,10 @@ class data_cache : public baseline_cache {
   data_cache(const char *name, cache_config &config, int core_id, int type_id,
              mem_fetch_interface *memport, mem_fetch_allocator *mfcreator,
              enum mem_fetch_status status, mem_access_type wr_alloc_type,
-             mem_access_type wrbk_type, class gpgpu_sim *gpu, enum cache_gpu_level level)
-      : baseline_cache(name, config, core_id, type_id, memport, status, level) {
+             mem_access_type wrbk_type, class gpgpu_sim *gpu,
+             enum cache_gpu_level level)
+      : baseline_cache(name, config, core_id, type_id, memport, status, level,
+                       gpu) {
     init(mfcreator);
     m_wr_alloc_type = wr_alloc_type;
     m_wrbk_type = wrbk_type;

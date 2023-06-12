@@ -1227,6 +1227,51 @@ void baseline_cache::display_state(FILE *fp) const {
   fprintf(fp, "\n");
 }
 
+void baseline_cache::inc_aggregated_stats(cache_request_status status,
+                                          cache_request_status cache_status,
+                                          mem_fetch *mf,
+                                          enum cache_gpu_level level) {
+  if (level == L1_GPU_CACHE) {
+    m_gpu->aggregated_l1_stats.inc_stats(
+        mf->get_streamID(), mf->get_access_type(),
+        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+  } else if (level == L2_GPU_CACHE) {
+    m_gpu->aggregated_l2_stats.inc_stats(
+        mf->get_streamID(), mf->get_access_type(),
+        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+  }
+}
+
+void baseline_cache::inc_aggregated_fail_stats(cache_request_status status,
+                                          cache_request_status cache_status,
+                                          mem_fetch *mf,
+                                          enum cache_gpu_level level) {
+    if (level == L1_GPU_CACHE) {
+    m_gpu->aggregated_l1_stats.inc_fail_stats(
+        mf->get_streamID(), mf->get_access_type(),
+        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+  } else if (level == L2_GPU_CACHE) {
+    m_gpu->aggregated_l2_stats.inc_fail_stats(
+        mf->get_streamID(), mf->get_access_type(),
+        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+  }
+}
+
+void baseline_cache::inc_aggregated_stats_pw(cache_request_status status,
+                                          cache_request_status cache_status,
+                                          mem_fetch *mf,
+                                          enum cache_gpu_level level) {
+  if (level == L1_GPU_CACHE) {
+    m_gpu->aggregated_l1_stats.inc_stats_pw(
+        mf->get_streamID(), mf->get_access_type(),
+        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+  } else if (level == L2_GPU_CACHE) {
+    m_gpu->aggregated_l2_stats.inc_stats_pw(
+        mf->get_streamID(), mf->get_access_type(),
+        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+  }
+}
+
 /// Read miss handler without writeback
 void baseline_cache::send_read_request(new_addr_type addr,
                                        new_addr_type block_addr,
