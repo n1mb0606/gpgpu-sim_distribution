@@ -882,8 +882,7 @@ void cache_stats::print_stats(FILE *fout, unsigned long long streamID, const cha
     total_access.resize(NUM_MEM_ACCESS_TYPE, 0);
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-        fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %llu\n", m_cache_name.c_str(),
-                streamid,
+        fprintf(fout, "\t%s[%s][%s] = %llu\n", m_cache_name.c_str(),
                 mem_access_type_str((enum mem_access_type)type),
                 cache_request_status_str((enum cache_request_status)status),
                 m_stats.at(streamid)[type][status]);
@@ -896,8 +895,7 @@ void cache_stats::print_stats(FILE *fout, unsigned long long streamID, const cha
     }
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       if (total_access[type] > 0)
-        fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %u\n", m_cache_name.c_str(),
-                streamid,
+        fprintf(fout, "\t%s[%s][%s] = %u\n", m_cache_name.c_str(),
                 mem_access_type_str((enum mem_access_type)type), "TOTAL_ACCESS",
                 total_access[type]);
     }
@@ -914,8 +912,7 @@ void cache_stats::print_fail_stats(FILE *fout, unsigned long long streamID, cons
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       for (unsigned fail = 0; fail < NUM_CACHE_RESERVATION_FAIL_STATUS; ++fail) {
         if (m_fail_stats.at(streamid)[type][fail] > 0) {
-          fprintf(fout, "\t%s[Stream_%llu][%s][%s] = %llu\n", m_cache_name.c_str(),
-                  streamid,
+          fprintf(fout, "\t%s[%s][%s] = %llu\n", m_cache_name.c_str(),
                   mem_access_type_str((enum mem_access_type)type),
                   cache_fail_status_str((enum cache_reservation_fail_reason)fail),
                   m_fail_stats.at(streamid)[type][fail]);

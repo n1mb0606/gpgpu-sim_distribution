@@ -1384,6 +1384,8 @@ void gpgpu_sim::gpu_print_stat(unsigned long long streamID) {
   std::string kernel_info_str = executed_kernel_info_string();
   fprintf(statfout, "%s", kernel_info_str.c_str());
 
+  printf("kernel_stream_id = %llu\n", streamID);
+
   printf("gpu_sim_cycle = %lld\n", gpu_sim_cycle);
   printf("gpu_sim_insn = %lld\n", gpu_sim_insn);
   printf("gpu_ipc = %12.4f\n", (float)gpu_sim_insn / gpu_sim_cycle);
