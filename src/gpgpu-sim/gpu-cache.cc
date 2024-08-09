@@ -781,10 +781,6 @@ cache_stats cache_stats::operator+(const cache_stats &cs) {
     else {
       for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
         for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
-            // test
-            if ((type == GLOBAL_ACC_R) && (status == HIT))
-              fprintf(stdout, "cache_stats::operator+ m_stats=%llu, cs=%llu\n", ret.m_stats.at(streamID)[type][status], cs(type, status, false, streamID));
-
             ret.m_stats.at(streamID)[type][status] += cs(type, status, false, streamID);
         }
       }
