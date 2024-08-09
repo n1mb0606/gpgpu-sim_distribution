@@ -791,7 +791,7 @@ void gpgpu_sim::launch(kernel_info_t *kinfo) {
   unsigned kernelID = kinfo->get_uid();
   unsigned long long streamID = kinfo->get_streamID();
 
-  kernel_time_t kernel_time = {GLOBAL_TIMER, 0};
+  kernel_time_t kernel_time = {gpu_tot_sim_cycle + gpu_sim_cycle, 0};
   if (gpu_kernel_time.find(streamID) == gpu_kernel_time.end()) {
     std::map<unsigned, kernel_time_t> new_val;
     new_val.insert(std::pair<unsigned, kernel_time_t>(kernelID, kernel_time));   ///// need fix
@@ -921,7 +921,7 @@ void gpgpu_sim::set_kernel_done(kernel_info_t *kernel) {
   last_uid = uid;
   unsigned long long streamID = kernel->get_streamID();
   last_streamID = streamID;
-  gpu_kernel_time.at(streamID).at(uid).end_cycle = GLOBAL_TIMER;
+  gpu_kernel_time.at(streamID).at(uid).end_cycle = gpu_tot_sim_cycle + gpu_sim_cycle;
   m_finished_kernel.push_back(uid);
   std::vector<kernel_info_t *>::iterator k;
   for (k = m_running_kernels.begin(); k != m_running_kernels.end(); k++) {
@@ -2031,7 +2031,6 @@ void gpgpu_sim::cycle() {
       raise(SIGTRAP);  // Debug breakpoint
     }
     gpu_sim_cycle++;
-    GLOBAL_TIMER++;
 
     if (g_interactive_debugger_enabled) gpgpu_debug();
 
