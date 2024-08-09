@@ -74,7 +74,7 @@ enum cache_event_type {
 
 enum cache_gpu_level {
   L1_GPU_CACHE = 0,
-  L2_GPU_CACHE, 
+  L2_GPU_CACHE,
   OTHER_GPU_CACHE,
   NUM_CACHE_GPU_LEVELS
 };
@@ -1207,20 +1207,27 @@ class cache_stats {
   void clear();
   // Clear AerialVision cache stats after each window
   void clear_pw();
-  void inc_stats(int access_type, int access_outcome, unsigned long long streamID);
+  void inc_stats(int access_type, int access_outcome,
+                 unsigned long long streamID);
   // Increment AerialVision cache stats
-  void inc_stats_pw(int access_type, int access_outcome, unsigned long long streamID);
-  void inc_fail_stats(int access_type, int fail_outcome, unsigned long long streamID);
+  void inc_stats_pw(int access_type, int access_outcome,
+                    unsigned long long streamID);
+  void inc_fail_stats(int access_type, int fail_outcome,
+                      unsigned long long streamID);
   enum cache_request_status select_stats_status(
       enum cache_request_status probe, enum cache_request_status access) const;
   unsigned long long &operator()(int access_type, int access_outcome,
-                                 bool fail_outcome, unsigned long long streamID);
+                                 bool fail_outcome,
+                                 unsigned long long streamID);
   unsigned long long operator()(int access_type, int access_outcome,
-                                bool fail_outcome, unsigned long long streamID) const;
+                                bool fail_outcome,
+                                unsigned long long streamID) const;
   cache_stats operator+(const cache_stats &cs);
   cache_stats &operator+=(const cache_stats &cs);
-  void print_stats(FILE *fout, unsigned long long streamID, const char *cache_name = "Cache_stats") const;
-  void print_fail_stats(FILE *fout, unsigned long long streamID, const char *cache_name = "Cache_fail_stats") const;
+  void print_stats(FILE *fout, unsigned long long streamID,
+                   const char *cache_name = "Cache_stats") const;
+  void print_fail_stats(FILE *fout, unsigned long long streamID,
+                        const char *cache_name = "Cache_fail_stats") const;
 
   unsigned long long get_stats(enum mem_access_type *access_type,
                                unsigned num_access_type,
@@ -1237,10 +1244,13 @@ class cache_stats {
   bool check_valid(int type, int status) const;
   bool check_fail_valid(int type, int fail) const;
 
-  std::map<unsigned long long, std::vector<std::vector<unsigned long long>>> m_stats;
+  std::map<unsigned long long, std::vector<std::vector<unsigned long long>>>
+      m_stats;
   // AerialVision cache stats (per-window)
-  std::map<unsigned long long, std::vector<std::vector<unsigned long long>>> m_stats_pw;
-  std::map<unsigned long long, std::vector<std::vector<unsigned long long>>> m_fail_stats;
+  std::map<unsigned long long, std::vector<std::vector<unsigned long long>>>
+      m_stats_pw;
+  std::map<unsigned long long, std::vector<std::vector<unsigned long long>>>
+      m_fail_stats;
 
   unsigned long long m_cache_port_available_cycles;
   unsigned long long m_cache_data_port_busy_cycles;
@@ -1270,12 +1280,13 @@ class baseline_cache : public cache_t {
  public:
   baseline_cache(const char *name, cache_config &config, int core_id,
                  int type_id, mem_fetch_interface *memport,
-                 enum mem_fetch_status status, enum cache_gpu_level level, gpgpu_sim *gpu)
+                 enum mem_fetch_status status, enum cache_gpu_level level,
+                 gpgpu_sim *gpu)
       : m_config(config),
         m_tag_array(new tag_array(config, core_id, type_id)),
         m_mshrs(config.m_mshr_entries, config.m_mshr_max_merge),
         m_bandwidth_management(config),
-        m_level(level), 
+        m_level(level),
         m_gpu(gpu) {
     init(name, config, memport, status);
   }
@@ -1348,11 +1359,11 @@ class baseline_cache : public cache_t {
                             cache_request_status cache_status, mem_fetch *mf,
                             enum cache_gpu_level level);
   void inc_aggregated_fail_stats(cache_request_status status,
-                            cache_request_status cache_status, mem_fetch *mf,
-                            enum cache_gpu_level level);
+                                 cache_request_status cache_status,
+                                 mem_fetch *mf, enum cache_gpu_level level);
   void inc_aggregated_stats_pw(cache_request_status status,
-                            cache_request_status cache_status, mem_fetch *mf,
-                            enum cache_gpu_level level);
+                               cache_request_status cache_status, mem_fetch *mf,
+                               enum cache_gpu_level level);
 
   // This is a gapping hole we are poking in the system to quickly handle
   // filling the cache on cudamemcopies. We don't care about anything other than
@@ -1691,7 +1702,8 @@ class l1_cache : public data_cache {
  public:
   l1_cache(const char *name, cache_config &config, int core_id, int type_id,
            mem_fetch_interface *memport, mem_fetch_allocator *mfcreator,
-           enum mem_fetch_status status, class gpgpu_sim *gpu, enum cache_gpu_level level)
+           enum mem_fetch_status status, class gpgpu_sim *gpu,
+           enum cache_gpu_level level)
       : data_cache(name, config, core_id, type_id, memport, mfcreator, status,
                    L1_WR_ALLOC_R, L1_WRBK_ACC, gpu, level) {}
 
@@ -1716,7 +1728,8 @@ class l2_cache : public data_cache {
  public:
   l2_cache(const char *name, cache_config &config, int core_id, int type_id,
            mem_fetch_interface *memport, mem_fetch_allocator *mfcreator,
-           enum mem_fetch_status status, class gpgpu_sim *gpu, enum cache_gpu_level level)
+           enum mem_fetch_status status, class gpgpu_sim *gpu,
+           enum cache_gpu_level level)
       : data_cache(name, config, core_id, type_id, memport, mfcreator, status,
                    L2_WR_ALLOC_R, L2_WRBK_ACC, gpu, level) {}
 

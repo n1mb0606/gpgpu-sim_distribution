@@ -794,11 +794,14 @@ void gpgpu_sim::launch(kernel_info_t *kinfo) {
   kernel_time_t kernel_time = {gpu_tot_sim_cycle + gpu_sim_cycle, 0};
   if (gpu_kernel_time.find(streamID) == gpu_kernel_time.end()) {
     std::map<unsigned, kernel_time_t> new_val;
-    new_val.insert(std::pair<unsigned, kernel_time_t>(kernelID, kernel_time));   ///// need fix
-    gpu_kernel_time.insert(std::pair<unsigned long long, std::map<unsigned, kernel_time_t>>(streamID, new_val));
-  }
-  else {
-    gpu_kernel_time.at(streamID).insert(std::pair<unsigned, kernel_time_t>(kernelID, kernel_time));
+    new_val.insert(std::pair<unsigned, kernel_time_t>(
+        kernelID, kernel_time));  ///// need fix
+    gpu_kernel_time.insert(
+        std::pair<unsigned long long, std::map<unsigned, kernel_time_t>>(
+            streamID, new_val));
+  } else {
+    gpu_kernel_time.at(streamID).insert(
+        std::pair<unsigned, kernel_time_t>(kernelID, kernel_time));
     ////////// assume same kernel ID do not appear more than once
   }
 
@@ -910,7 +913,7 @@ unsigned gpgpu_sim::finished_kernel() {
   if (m_finished_kernel.empty()) {
     last_streamID = -1;
     return 0;
-  } 
+  }
   unsigned result = m_finished_kernel.front();
   m_finished_kernel.pop_front();
   return result;
@@ -921,7 +924,8 @@ void gpgpu_sim::set_kernel_done(kernel_info_t *kernel) {
   last_uid = uid;
   unsigned long long streamID = kernel->get_streamID();
   last_streamID = streamID;
-  gpu_kernel_time.at(streamID).at(uid).end_cycle = gpu_tot_sim_cycle + gpu_sim_cycle;
+  gpu_kernel_time.at(streamID).at(uid).end_cycle =
+      gpu_tot_sim_cycle + gpu_sim_cycle;
   m_finished_kernel.push_back(uid);
   std::vector<kernel_info_t *>::iterator k;
   for (k = m_running_kernels.begin(); k != m_running_kernels.end(); k++) {
@@ -1467,9 +1471,11 @@ void gpgpu_sim::gpu_print_stat(unsigned long long streamID) {
     m_cluster[i]->get_cache_stats(core_cache_stats);
   }
   printf("\nTotal_core_cache_stats:\n");
-  core_cache_stats.print_stats(stdout, streamID, "Total_core_cache_stats_breakdown");
+  core_cache_stats.print_stats(stdout, streamID,
+                               "Total_core_cache_stats_breakdown");
   printf("\nTotal_core_cache_fail_stats:\n");
-  core_cache_stats.print_fail_stats(stdout, streamID, "Total_core_cache_fail_stats_breakdown");
+  core_cache_stats.print_fail_stats(stdout, streamID,
+                                    "Total_core_cache_fail_stats_breakdown");
   shader_print_scheduler_stat(stdout, false);
 
   m_shader_stats->print(stdout);
@@ -1538,7 +1544,8 @@ void gpgpu_sim::gpu_print_stat(unsigned long long streamID) {
       printf("L2_total_cache_breakdown:\n");
       l2_stats.print_stats(stdout, streamID, "L2_cache_stats_breakdown");
       printf("L2_total_cache_reservation_fail_breakdown:\n");
-      l2_stats.print_fail_stats(stdout, streamID, "L2_cache_stats_fail_breakdown");
+      l2_stats.print_fail_stats(stdout, streamID,
+                                "L2_cache_stats_fail_breakdown");
       total_l2_css.print_port_stats(stdout, "L2_cache");
     }
   }

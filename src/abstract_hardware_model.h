@@ -233,7 +233,8 @@ class kernel_info_t {
   //      m_num_cores_running=0;
   //      m_param_mem=NULL;
   //   }
-  kernel_info_t(dim3 gridDim, dim3 blockDim, class function_info *entry, unsigned long long streamID);
+  kernel_info_t(dim3 gridDim, dim3 blockDim, class function_info *entry,
+                unsigned long long streamID);
   kernel_info_t(
       dim3 gridDim, dim3 blockDim, class function_info *entry,
       std::map<std::string, const struct cudaArray *> nameToCudaArray,
@@ -326,7 +327,7 @@ class kernel_info_t {
 
   class function_info *m_kernel_entry;
 
-  unsigned m_uid;     // Kernel ID
+  unsigned m_uid;  // Kernel ID
   unsigned long long m_streamID;
 
   // These maps contain the snapshot of the texture mappings at kernel launch
@@ -902,8 +903,8 @@ class mem_fetch_interface {
 class mem_fetch_allocator {
  public:
   virtual mem_fetch *alloc(new_addr_type addr, mem_access_type type,
-                           unsigned size, bool wr,
-                           unsigned long long cycle, unsigned long long streamID) const = 0;
+                           unsigned size, bool wr, unsigned long long cycle,
+                           unsigned long long streamID) const = 0;
   virtual mem_fetch *alloc(const class warp_inst_t &inst,
                            const mem_access_t &access,
                            unsigned long long cycle) const = 0;
@@ -913,7 +914,8 @@ class mem_fetch_allocator {
                            const mem_access_sector_mask_t &sector_mask,
                            unsigned size, bool wr, unsigned long long cycle,
                            unsigned wid, unsigned sid, unsigned tpc,
-                           mem_fetch *original_mf, unsigned long long streamID) const = 0;
+                           mem_fetch *original_mf,
+                           unsigned long long streamID) const = 0;
 };
 
 // the maximum number of destination, source, or address uarch operands in a

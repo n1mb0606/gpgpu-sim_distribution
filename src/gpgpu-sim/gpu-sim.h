@@ -689,7 +689,8 @@ class gpgpu_sim : public gpgpu_t {
     unsigned long long start_cycle;
     unsigned long long end_cycle;
   } kernel_time_t;
-  std::map<unsigned long long, std::map<unsigned, kernel_time_t>> gpu_kernel_time;
+  std::map<unsigned long long, std::map<unsigned, kernel_time_t>>
+      gpu_kernel_time;
   unsigned long long last_streamID;
   unsigned long long last_uid;
   cache_stats aggregated_l1_stats;
@@ -722,7 +723,9 @@ class gpgpu_sim : public gpgpu_t {
  public:
   bool is_functional_sim() { return m_functional_sim; }
   kernel_info_t *get_functional_kernel() { return m_functional_sim_kernel; }
-  std::vector<kernel_info_t *> get_running_kernels() { return m_running_kernels; }
+  std::vector<kernel_info_t *> get_running_kernels() {
+    return m_running_kernels;
+  }
   void functional_launch(kernel_info_t *k) {
     m_functional_sim = true;
     m_functional_sim_kernel = k;
