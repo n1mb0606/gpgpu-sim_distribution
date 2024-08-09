@@ -902,8 +902,6 @@ void cache_stats::print_stats(FILE *fout, unsigned long long streamID,
   /// "<cache_name>[<request_type>][<request_status>] = <stat_value>"
   ///
 
-  assert(streamID != -1);
-
   std::vector<unsigned> total_access;
   std::string m_cache_name = cache_name;
   for (auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
