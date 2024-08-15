@@ -303,7 +303,6 @@ void stream_manager::stop_all_running_kernels() {
   pthread_mutex_lock(&m_lock);
 
   std::vector<unsigned long long> finished_streams;
-  finished_streams.clear();
   std::vector<kernel_info_t *> running_kernels = m_gpu->get_running_kernels();
   for (kernel_info_t *k : running_kernels) {
     if (k != NULL) {

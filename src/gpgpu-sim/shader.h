@@ -2043,7 +2043,7 @@ class shader_core_mem_fetch_allocator : public mem_fetch_allocator {
                    unsigned long long cycle) const {
     warp_inst_t inst_copy = inst;
     mem_fetch *mf = new mem_fetch(
-        access, &inst_copy,
+        access, &inst_copy, inst.get_streamID(),
         access.is_write() ? WRITE_PACKET_SIZE : READ_PACKET_SIZE,
         inst.warp_id(), m_core_id, m_cluster_id, m_memory_config, cycle);
     return mf;

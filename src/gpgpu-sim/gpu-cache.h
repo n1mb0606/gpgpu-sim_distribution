@@ -1244,6 +1244,7 @@ class cache_stats {
   bool check_valid(int type, int status) const;
   bool check_fail_valid(int type, int fail) const;
 
+  // CUDA streamID -> cache stats[NUM_MEM_ACCESS_TYPE]
   std::map<unsigned long long, std::vector<std::vector<unsigned long long>>>
       m_stats;
   // AerialVision cache stats (per-window)

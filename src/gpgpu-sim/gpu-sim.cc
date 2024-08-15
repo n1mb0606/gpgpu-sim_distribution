@@ -795,7 +795,7 @@ void gpgpu_sim::launch(kernel_info_t *kinfo) {
   if (gpu_kernel_time.find(streamID) == gpu_kernel_time.end()) {
     std::map<unsigned, kernel_time_t> new_val;
     new_val.insert(std::pair<unsigned, kernel_time_t>(
-        kernelID, kernel_time));  ///// need fix
+        kernelID, kernel_time));
     gpu_kernel_time.insert(
         std::pair<unsigned long long, std::map<unsigned, kernel_time_t>>(
             streamID, new_val));

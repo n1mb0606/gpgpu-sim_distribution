@@ -896,11 +896,12 @@ cache_stats &cache_stats::operator+=(const cache_stats &cs) {
 void cache_stats::print_stats(FILE *fout, unsigned long long streamID,
                               const char *cache_name) const {
   ///
-  /// Print out each non-zero cache statistic for every memory access type and
-  /// status "cache_name" defaults to "Cache_stats" when no argument is
-  /// provided, otherwise the provided name is used. The printed format is
+  /// For a given CUDA stream, print out each non-zero cache statistic for every
+  /// memory access type and status "cache_name" defaults to "Cache_stats" when
+  /// no argument is provided, otherwise the provided name is used. The printed
+  /// format is
   /// "<cache_name>[<request_type>][<request_status>] = <stat_value>"
-  ///
+  /// Specify streamID to be -1 to print every stream.
 
   std::vector<unsigned> total_access;
   std::string m_cache_name = cache_name;
@@ -1035,7 +1036,7 @@ void cache_stats::get_sub_stats_pw(struct cache_sub_stats_pw &css) const {
   struct cache_sub_stats_pw t_css;
   t_css.clear();
 
-  for (auto iter = m_stats.begin(); iter != m_stats.end(); ++iter) {
+  for (auto iter = m_stats_pw.begin(); iter != m_stats_pw.end(); ++iter) {
     unsigned long long streamID = iter->first;
     for (unsigned type = 0; type < NUM_MEM_ACCESS_TYPE; ++type) {
       for (unsigned status = 0; status < NUM_CACHE_REQUEST_STATUS; ++status) {
@@ -1280,7 +1281,7 @@ void baseline_cache::inc_aggregated_stats(cache_request_status status,
   } else if (level == L2_GPU_CACHE) {
     m_gpu->aggregated_l2_stats.inc_stats(
         mf->get_streamID(), mf->get_access_type(),
-        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+        m_gpu->aggregated_l2_stats.select_stats_status(status, cache_status));
   }
 }
 
@@ -1294,7 +1295,7 @@ void baseline_cache::inc_aggregated_fail_stats(
   } else if (level == L2_GPU_CACHE) {
     m_gpu->aggregated_l2_stats.inc_fail_stats(
         mf->get_streamID(), mf->get_access_type(),
-        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+        m_gpu->aggregated_l2_stats.select_stats_status(status, cache_status));
   }
 }
 
@@ -1309,7 +1310,7 @@ void baseline_cache::inc_aggregated_stats_pw(cache_request_status status,
   } else if (level == L2_GPU_CACHE) {
     m_gpu->aggregated_l2_stats.inc_stats_pw(
         mf->get_streamID(), mf->get_access_type(),
-        m_gpu->aggregated_l1_stats.select_stats_status(status, cache_status));
+        m_gpu->aggregated_l2_stats.select_stats_status(status, cache_status));
   }
 }
 
@@ -1535,7 +1536,7 @@ enum cache_request_status data_cache::wr_miss_wa_naive(
                        mf->get_access_sector_mask(), m_gpu->gpgpu_ctx);
 
   mem_fetch *n_mf =
-      new mem_fetch(*ma, mf->get_streamID(), mf->get_ctrl_size(), mf->get_wid(),
+      new mem_fetch(*ma, NULL, mf->get_streamID(), mf->get_ctrl_size(), mf->get_wid(),
                     mf->get_sid(), mf->get_tpc(), mf->get_mem_config(),
                     m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle);
 
@@ -1665,7 +1666,7 @@ enum cache_request_status data_cache::wr_miss_wa_fetch_on_write(
         mf->get_access_sector_mask(), m_gpu->gpgpu_ctx);
 
     mem_fetch *n_mf = new mem_fetch(
-        *ma, mf->get_streamID(), mf->get_ctrl_size(), mf->get_wid(),
+        *ma, NULL, mf->get_streamID(), mf->get_ctrl_size(), mf->get_wid(),
         mf->get_sid(), mf->get_tpc(), mf->get_mem_config(),
         m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle, NULL, mf);
 

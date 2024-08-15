@@ -54,13 +54,10 @@ class memory_config;
 class mem_fetch {
  public:
   mem_fetch(const mem_access_t &access, const warp_inst_t *inst,
-            unsigned ctrl_size, unsigned wid, unsigned sid, unsigned tpc,
-            const memory_config *config, unsigned long long cycle,
-            mem_fetch *original_mf = NULL, mem_fetch *original_wr_mf = NULL);
-  mem_fetch(const mem_access_t &access, unsigned long long streamID,
-            unsigned ctrl_size, unsigned wid, unsigned sid, unsigned tpc,
-            const memory_config *config, unsigned long long cycle,
-            mem_fetch *original_mf = NULL, mem_fetch *original_wr_mf = NULL);
+            unsigned long long streamID, unsigned ctrl_size, unsigned wid,
+            unsigned sid, unsigned tpc, const memory_config *config,
+            unsigned long long cycle, mem_fetch *original_mf = NULL,
+            mem_fetch *original_wr_mf = NULL);
   ~mem_fetch();
 
   void set_status(enum mem_fetch_status status, unsigned long long cycle);
