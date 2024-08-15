@@ -1535,10 +1535,10 @@ enum cache_request_status data_cache::wr_miss_wa_naive(
                        mf->get_access_warp_mask(), mf->get_access_byte_mask(),
                        mf->get_access_sector_mask(), m_gpu->gpgpu_ctx);
 
-  mem_fetch *n_mf =
-      new mem_fetch(*ma, NULL, mf->get_streamID(), mf->get_ctrl_size(), mf->get_wid(),
-                    mf->get_sid(), mf->get_tpc(), mf->get_mem_config(),
-                    m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle);
+  mem_fetch *n_mf = new mem_fetch(
+      *ma, NULL, mf->get_streamID(), mf->get_ctrl_size(), mf->get_wid(),
+      mf->get_sid(), mf->get_tpc(), mf->get_mem_config(),
+      m_gpu->gpu_tot_sim_cycle + m_gpu->gpu_sim_cycle);
 
   bool do_miss = false;
   bool wb = false;

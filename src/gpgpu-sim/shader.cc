@@ -59,9 +59,9 @@ mem_fetch *shader_core_mem_fetch_allocator::alloc(
     new_addr_type addr, mem_access_type type, unsigned size, bool wr,
     unsigned long long cycle, unsigned long long streamID) const {
   mem_access_t access(type, addr, size, wr, m_memory_config->gpgpu_ctx);
-  mem_fetch *mf =
-      new mem_fetch(access, NULL, streamID, wr ? WRITE_PACKET_SIZE : READ_PACKET_SIZE,
-                    -1, m_core_id, m_cluster_id, m_memory_config, cycle);
+  mem_fetch *mf = new mem_fetch(
+      access, NULL, streamID, wr ? WRITE_PACKET_SIZE : READ_PACKET_SIZE, -1,
+      m_core_id, m_cluster_id, m_memory_config, cycle);
   return mf;
 }
 
