@@ -135,7 +135,7 @@ class shd_warp_t {
     m_waiting_ldgsts = false;
 
     // Ni: Clear m_ldgdepbar_buf
-    for (int i = 0; i < m_ldgdepbar_buf.size(); i++) {
+    for (unsigned i = 0; i < m_ldgdepbar_buf.size(); i++) {
       m_ldgdepbar_buf[i].clear();
     }
     m_ldgdepbar_buf.clear();
@@ -167,7 +167,7 @@ class shd_warp_t {
     m_waiting_ldgsts = false;
 
     // Ni: Clear m_ldgdepbar_buf
-    for (int i = 0; i < m_ldgdepbar_buf.size(); i++) {
+    for (unsigned i = 0; i < m_ldgdepbar_buf.size(); i++) {
       m_ldgdepbar_buf[i].clear();
     }
     m_ldgdepbar_buf.clear();
