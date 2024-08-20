@@ -787,9 +787,10 @@ cache_stats cache_stats::operator+(const cache_stats &cs) {
   }
   for (auto iter = m_stats_pw.begin(); iter != m_stats_pw.end(); ++iter) {
     unsigned long long streamID = iter->first;
-    ret.m_stats_pw.insert(std::pair<unsigned long long,
-                                 std::vector<std::vector<unsigned long long>>>(
-        streamID, m_stats_pw.at(streamID)));
+    ret.m_stats_pw.insert(
+        std::pair<unsigned long long,
+                  std::vector<std::vector<unsigned long long>>>(
+            streamID, m_stats_pw.at(streamID)));
   }
   for (auto iter = m_fail_stats.begin(); iter != m_fail_stats.end(); ++iter) {
     unsigned long long streamID = iter->first;
